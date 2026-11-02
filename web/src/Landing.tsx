@@ -1,5 +1,6 @@
 import { ArrowRight } from 'lucide-react'
 import { HeroDemo } from '@/components/HeroDemo'
+import { NearMark } from '@/components/NearMark'
 import { PageShell } from '@/components/SiteHeader'
 import { Stamp, type StampTone } from '@/components/Stamp'
 import { Button } from '@/components/ui/button'
@@ -209,7 +210,7 @@ function Attacks() {
 
 function WhyNear() {
   return (
-    <Section title="Why this needs NEAR">
+    <Section title="Why this needs NEAR" mark={<NearMark className="size-5 shrink-0" />}>
       <div className="grid gap-8 md:grid-cols-2 md:gap-16">
         <div className="flex flex-col gap-2">
           <p className="font-medium">Function-call access keys</p>
@@ -232,12 +233,23 @@ function WhyNear() {
 
 // ------------------------------------------------------------------ shared
 
-function Section({ title, lead, children }: { title: string; lead?: string; children: React.ReactNode }) {
+function Section({
+  title,
+  lead,
+  mark,
+  children,
+}: {
+  title: string
+  lead?: string
+  mark?: React.ReactNode
+  children: React.ReactNode
+}) {
   const id = title.toLowerCase().replace(/[^a-z]+/g, '-')
   return (
     <section aria-labelledby={id} className="flex flex-col gap-8 py-16 md:py-20">
       <div className="flex max-w-[40rem] flex-col gap-2">
-        <h2 id={id} className="text-2xl font-medium tracking-[-0.01em]">
+        <h2 id={id} className="flex items-center gap-3 text-2xl font-medium tracking-[-0.01em]">
+          {mark}
           {title}
         </h2>
         {lead && <p className="text-muted-foreground">{lead}</p>}
