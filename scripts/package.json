@@ -1,0 +1,14 @@
+{
+  "name": "haptix-leash-scripts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev-passkey": "node dev-passkey.mjs",
+    "e2e": "node e2e.mjs"
+  },
+  "dependencies": {
+    "@noble/curves": "2.4.0",
+    "@noble/hashes": "2.4.0",
+    "near-api-js": "7.4.0"
+  }
+}
