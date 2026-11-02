@@ -373,3 +373,16 @@ fn high_s_signature_is_accepted() {
     c.approve(U64(0), a);
     assert_eq!(c.get_stats().approved, 1);
 }
+
+#[test]
+fn overview_matches_individual_views() {
+    let mut c = setup();
+    c.agent_spend(shop(), near(2), None);
+    c.agent_spend(attacker(), near(50), None);
+    let o = c.get_overview();
+    assert_eq!(o.policy, c.get_policy());
+    assert_eq!(o.stats, c.get_stats());
+    assert_eq!(o.pending, c.get_pending(None, None));
+    assert_eq!(o.window.spent, c.get_window().spent);
+    assert_eq!(o.nonce, c.get_nonce());
+}

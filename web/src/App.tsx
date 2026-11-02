@@ -75,7 +75,9 @@ export default function App() {
     }
   }
 
-  const ready = passkey && account && snapshot
+  // Stay on setup until the leash at `account` is owned by this device's passkey,
+  // so the keys to deploy with stay on screen.
+  const ready = passkey && account && snapshot && isOwner
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-8 px-4 pb-16 pt-6">
@@ -102,6 +104,12 @@ export default function App() {
           {passkey && account && error && (
             <p role="alert" className="rounded-md border border-destructive/40 px-3 py-2 text-sm text-destructive">
               Can't read <span className="font-mono">{account}</span>: {shortError(error)}
+            </p>
+          )}
+          {passkey && account && snapshot && !isOwner && (
+            <p role="alert" className="rounded-md border border-warning/40 px-3 py-2 text-sm text-warning">
+              <span className="font-mono">{account}</span> is owned by a different passkey. Deploy a leash with the keys
+              above, then enter that account.
             </p>
           )}
         </>

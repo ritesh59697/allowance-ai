@@ -218,6 +218,17 @@ pub struct WindowView {
     pub remaining: NearToken,
 }
 
+/// Everything a dashboard needs, in one view call.
+#[near(serializers = [json])]
+pub struct Overview {
+    pub owner: PasskeyOwner,
+    pub policy: Policy,
+    pub window: WindowView,
+    pub pending: Vec<PendingSpend>,
+    pub stats: Stats,
+    pub nonce: U64,
+}
+
 #[near(contract_state)]
 #[derive(PanicOnDefault)]
 pub struct Leash {
@@ -426,6 +437,17 @@ impl Leash {
     }
 
     // ---------------------------------------------------------------- views
+
+    pub fn get_overview(&self) -> Overview {
+        Overview {
+            owner: self.owner.clone(),
+            policy: self.policy.clone(),
+            window: self.get_window(),
+            pending: self.get_pending(None, None),
+            stats: self.stats.clone(),
+            nonce: U64(self.auth_nonce),
+        }
+    }
 
     pub fn get_policy(&self) -> Policy {
         self.policy.clone()

@@ -50,6 +50,18 @@ if (agentPublicKey) {
   );
 }
 
+// UPGRADE=1: replace the code only, keeping state (owner, policy, pending, stats).
+// Only valid when the state layout has not changed.
+if (process.env.UPGRADE === "1") {
+  const outcome = await owner.signAndSendTransaction({
+    receiverId: config.leashAccount,
+    actions: [actions.deployContract(readFileSync(wasmPath))],
+  });
+  console.log("code upgraded:", txLink(outcome));
+  console.log("overview nonce:", (await view("get_overview")).nonce);
+  process.exit(0);
+}
+
 const outcome = await owner.signAndSendTransaction({ receiverId: config.leashAccount, actions: batch });
 
 console.log("deployed + initialized:", txLink(outcome));

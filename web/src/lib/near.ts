@@ -76,29 +76,60 @@ export type LeashSnapshot = {
 }
 
 // ------------------------------------------------------------------ reads
+//
+// Reads use plain JSON-RPC over fetch, without the client library's
+// automatic retries: a polling page that retries every failure turns one
+// rate-limit response into a flood. The poller backs off instead.
 
-const view = async <T>(account: string, method: string, args: Record<string, unknown> = {}) =>
-  (await provider.callFunction({ contractId: account, method, args })) as T
+async function rpc<T>(method: string, params: Record<string, unknown>): Promise<T> {
+  const res = await fetch(config.rpcUrl, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 'leash', method, params }),
+  })
+  if (!res.ok) throw new Error(`RPC returned HTTP ${res.status}`)
+  const body = await res.json()
+  if (body.error) throw new Error(body.error.data ?? body.error.cause?.name ?? body.error.message)
+  return body.result as T
+}
+
+async function view<T>(account: string, method: string, args: Record<string, unknown> = {}): Promise<T> {
+  const result = await rpc<{ result: number[] }>('query', {
+    request_type: 'call_function',
+    finality: 'optimistic',
+    account_id: account,
+    method_name: method,
+    args_base64: btoa(JSON.stringify(args)),
+  })
+  return JSON.parse(new TextDecoder().decode(Uint8Array.from(result.result))) as T
+}
+
+type Overview = Omit<LeashSnapshot, 'agentKeys' | 'balance'> & { nonce: string }
+type AccessKeyList = {
+  keys: {
+    public_key: string
+    access_key: {
+      permission: 'FullAccess' | { FunctionCall: { allowance: string | null; method_names: string[] } }
+    }
+  }[]
+}
 
 export async function readLeash(account: string): Promise<LeashSnapshot> {
-  const [owner, policy, window, pending, stats, keys, state] = await Promise.all([
-    view<Owner>(account, 'get_owner'),
-    view<Policy>(account, 'get_policy'),
-    view<WindowView>(account, 'get_window'),
-    view<PendingSpend[]>(account, 'get_pending'),
-    view<Stats>(account, 'get_stats'),
-    provider.viewAccessKeyList({ accountId: account, finalityQuery: { finality: 'optimistic' } }),
-    provider.viewAccount({ accountId: account, blockQuery: { finality: 'optimistic' } }),
+  const [overview, keys, state] = await Promise.all([
+    view<Overview>(account, 'get_overview'),
+    rpc<AccessKeyList>('query', { request_type: 'view_access_key_list', finality: 'optimistic', account_id: account }),
+    rpc<{ amount: string }>('query', { request_type: 'view_account', finality: 'optimistic', account_id: account }),
   ])
   const agentKeys = keys.keys.flatMap((k) => {
     const permission = k.access_key.permission
-    if (typeof permission === 'string' || !('FunctionCall' in permission)) return []
+    if (permission === 'FullAccess') return []
     const { method_names, allowance } = permission.FunctionCall
     return method_names.length === 1 && method_names[0] === 'agent_spend'
-      ? [{ publicKey: k.public_key, allowance: allowance ?? null }]
+      ? [{ publicKey: k.public_key, allowance }]
       : []
   })
-  return { owner, policy, window, pending, stats, agentKeys, balance: String(state.amount) }
+  const { owner, policy, window, pending, stats } = overview
+  return { owner, policy, window, pending, stats, agentKeys, balance: state.amount }
 }
 
 // ------------------------------------------------------------------ writes
