@@ -2,7 +2,7 @@
 //   npm run arena
 import { createHash } from 'node:crypto'
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
-import { ArenaRefusal, arenaConfig, arenaSummary, attempt } from './arena.ts'
+import { ArenaRefusal, arenaConfig, arenaSummary, attempt, health, startChainCache } from './arena.ts'
 
 function required(name: string): string {
   const value = process.env[name]
@@ -10,7 +10,8 @@ function required(name: string): string {
   return value
 }
 
-const port = Number(required('ARENA_PORT'))
+// Hosts like Render inject PORT; locally ARENA_PORT from .env.
+const port = Number(process.env.PORT || required('ARENA_PORT'))
 const allowedOrigins = (process.env.ARENA_ALLOWED_ORIGINS || '').split(',').map((o) => o.trim()).filter(Boolean)
 const trustProxy = process.env.ARENA_TRUST_PROXY === '1'
 // Worst case 4 UTF-8 bytes per character, plus room for the JSON wrapper.
@@ -64,6 +65,10 @@ const server = createServer(async (req, res) => {
   if (req.method === 'OPTIONS') return send(res, 204, null)
   try {
     if (req.method === 'GET' && req.url === '/api/arena') return send(res, 200, arenaSummary())
+    if (req.method === 'GET' && req.url === '/api/health') {
+      const h = health()
+      return send(res, h.ok ? 200 : 503, h)
+    }
     if (req.method === 'POST' && req.url === '/api/attempt') {
       const body = (await readBody(req)) as { handle?: unknown; message?: unknown; mode?: unknown }
       return send(res, 200, await attempt(visitorId(req), body.handle, body.message, body.mode))
@@ -76,4 +81,5 @@ const server = createServer(async (req, res) => {
   }
 })
 
+startChainCache()
 server.listen(port, () => console.log(`arena listening on http://localhost:${port}`))

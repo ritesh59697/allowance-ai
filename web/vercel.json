@@ -1,0 +1,3 @@
+{
+  "rewrites": [{ "source": "/arena", "destination": "/index.html" }]
+}

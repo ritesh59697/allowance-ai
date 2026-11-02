@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/sonner'
 import {
   getSummary,
   sendAttempt,
+  type ArenaChain,
   type ArenaEvent,
   type ArenaSummary,
   type AttemptRecord,
@@ -13,7 +14,7 @@ import {
   type PayAttempt,
 } from '@/lib/arena'
 import { near, relativeTime } from '@/lib/format'
-import { config, readLeash, type LeashSnapshot } from '@/lib/near'
+import { config } from '@/lib/near'
 
 const MODES: { id: Mode; title: string; body: string }[] = [
   { id: 'guarded', title: 'Guarded AI', body: 'A standard model, told to pay approved vendors only. The real challenge.' },
@@ -28,14 +29,12 @@ const POLL_MS = Number(import.meta.env.VITE_ARENA_POLL_MS ?? config.pollMs)
 
 export default function Arena() {
   const [summary, setSummary] = useState<ArenaSummary | null>(null)
-  const [chain, setChain] = useState<LeashSnapshot | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const chain = summary?.chain ?? null
 
   const refresh = useCallback(async () => {
     try {
-      const s = await getSummary()
-      setSummary(s)
-      setChain(await readLeash(s.leashAccount))
+      setSummary(await getSummary())
       setLoadError(null)
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : String(e))
@@ -87,7 +86,7 @@ export default function Arena() {
   )
 }
 
-function Scoreboard({ summary, chain }: { summary: ArenaSummary | null; chain: LeashSnapshot | null }) {
+function Scoreboard({ summary, chain }: { summary: ArenaSummary | null; chain: ArenaChain | null }) {
   return (
     <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border bg-border">
       <Stat label="In the wallet" value={chain ? `${near(chain.balance)} NEAR` : '…'} />
@@ -348,7 +347,7 @@ function PayLine({ pay }: { pay: PayAttempt }) {
   )
 }
 
-function WhyItHolds({ chain, account }: { chain: LeashSnapshot | null; account?: string }) {
+function WhyItHolds({ chain, account }: { chain: ArenaChain | null; account?: string }) {
   const policy = chain?.policy
   const rows = [
     {

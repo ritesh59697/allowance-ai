@@ -1,4 +1,5 @@
 // Client for the arena server (agent/src/server.ts).
+import type { Policy, Stats, WindowView } from './near'
 const API = (import.meta.env.VITE_ARENA_API_URL as string | undefined) ?? ''
 
 export type PayAttempt = { receiver: string; amountNear: string; outcome: string; txUrl?: string; approvedPayee: boolean }
@@ -18,7 +19,18 @@ export type ArenaSummary = {
   attempts: number
   fooled: number
   strangerPaymentsSent: number
+  /** Read from the chain by the server on a timer; null until the first read. */
+  chain: ArenaChain | null
   recent: AttemptRecord[]
+}
+export type ArenaChain = {
+  balance: string
+  policy: Policy
+  window: WindowView
+  stats: Stats
+  pendingCount: number
+  agentKeyAllowance: string | null
+  readAt: string
 }
 export type ArenaEvent =
   | { kind: 'model'; text: string }

@@ -9,7 +9,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { defaultTools, runAgent, type AgentEvent } from './agent.ts'
 import { config, llmConfig } from './config.ts'
-import { provider, withTimeout, type SpendResult } from './leash.ts'
+import { agentAccount, provider, withTimeout, type SpendResult } from './leash.ts'
 
 function required(name: string): string {
   const value = process.env[name]
@@ -25,6 +25,7 @@ export const arenaConfig = {
   dataFile: required('ARENA_DATA_FILE'),
   feedSize: Number(required('ARENA_FEED_SIZE')),
   attemptTimeoutMs: Number(required('ARENA_ATTEMPT_TIMEOUT_MS')),
+  chainRefreshMs: Number(required('ARENA_CHAIN_REFRESH_MS')),
   /** Visitors pick a difficulty; each maps to a model. */
   models: {
     guarded: required('ARENA_MODEL_GUARDED'),
@@ -78,6 +79,71 @@ function persist(record: AttemptRecord) {
   appendFileSync(arenaConfig.dataFile, JSON.stringify(record) + '\n')
 }
 
+// ------------------------------------------------------------------ chain cache
+//
+// The server reads the leash on a timer and shares the result, so visitors'
+// browsers don't each poll the public RPC.
+
+type ChainSnapshot = {
+  balance: string
+  policy: unknown
+  window: unknown
+  stats: unknown
+  pendingCount: number
+  agentKeyAllowance: string | null
+  readAt: string
+}
+
+let chain: ChainSnapshot | null = null
+let chainError: string | null = null
+
+async function readChain() {
+  const view = (method: string) =>
+    withTimeout(provider.callFunction({ contractId: config.leashAccount, method, args: {} }), config.nearTimeoutMs, method)
+  try {
+    const signer = agentAccount().getSigner()
+    const agentPk = signer ? (await signer.getPublicKey()).toString() : null
+    const [overview, account, key] = await Promise.all([
+      view('get_overview') as Promise<{ policy: unknown; window: unknown; stats: unknown; pending: unknown[] }>,
+      withTimeout(provider.viewAccount({ accountId: config.leashAccount }), config.nearTimeoutMs, 'view account'),
+      agentPk
+        ? withTimeout(provider.viewAccessKey({ accountId: config.leashAccount, publicKey: agentPk }), config.nearTimeoutMs, 'view key')
+        : Promise.resolve(null),
+    ])
+    const permission = (key as { permission?: { FunctionCall?: { allowance?: string | null } } } | null)?.permission
+    chain = {
+      balance: String(account.amount),
+      policy: overview.policy,
+      window: overview.window,
+      stats: overview.stats,
+      pendingCount: overview.pending.length,
+      agentKeyAllowance: permission?.FunctionCall?.allowance != null ? String(permission.FunctionCall.allowance) : null,
+      readAt: new Date().toISOString(),
+    }
+    chainError = null
+  } catch (e) {
+    chainError = e instanceof Error ? e.message : String(e)
+  }
+}
+
+export function startChainCache() {
+  readChain()
+  setInterval(readChain, arenaConfig.chainRefreshMs).unref()
+}
+
+export function health() {
+  const stale = !chain || Date.now() - Date.parse(chain.readAt) > arenaConfig.chainRefreshMs * 3
+  return {
+    ok: !stale,
+    leashAccount: config.leashAccount,
+    chainReadAt: chain?.readAt ?? null,
+    chainError,
+    agentKeyAllowance: chain?.agentKeyAllowance ?? null,
+    pendingCount: chain?.pendingCount ?? null,
+    queued,
+  }
+}
+
 export function arenaSummary() {
   const pays = records.flatMap((r) => r.pays)
   const stolen = pays.filter((p) => !p.approvedPayee && p.outcome === 'sent')
@@ -87,6 +153,7 @@ export function arenaSummary() {
     attempts: records.length,
     fooled: records.filter((r) => r.fooled).length,
     strangerPaymentsSent: stolen.length,
+    chain,
     recent: records.slice(-arenaConfig.feedSize).reverse(),
   }
 }

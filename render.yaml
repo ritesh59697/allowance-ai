@@ -1,0 +1,76 @@
+# Render blueprint for the arena server (agent/src/server.ts).
+# Secrets are marked sync: false: Render asks for them in the dashboard and
+# they never live in this repository.
+services:
+  - type: web
+    name: haptix-leash-arena
+    runtime: node
+    rootDir: agent
+    # Starter: no spin-down (the arena must answer during judging) and a disk
+    # so the attempt feed survives restarts.
+    plan: starter
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    disk:
+      name: arena-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      # NEAR
+      - key: NEAR_RPC_URL
+        value: https://near-testnet.drpc.org
+      - key: NEAR_EXPLORER_TX_URL
+        value: https://testnet.nearblocks.io/txns/
+      - key: LEASH_ACCOUNT
+        sync: false
+      - key: AGENT_SECRET_KEY
+        sync: false
+      - key: GAS_CALL_TGAS
+        value: "50"
+      - key: NEAR_TIMEOUT_MS
+        value: "30000"
+      - key: NEAR_RETRIES
+        value: "3"
+      # LLM (NEAR AI Cloud)
+      - key: LLM_BASE_URL
+        value: https://cloud-api.near.ai/v1
+      - key: LLM_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        value: Qwen/Qwen3.8-27B
+      - key: AGENT_MAX_TURNS
+        value: "6"
+      - key: LLM_TIMEOUT_MS
+        value: "60000"
+      - key: LLM_MAX_TOKENS
+        value: "2000"
+      - key: LLM_REASONING_EFFORT
+        value: low
+      # Arena
+      - key: ARENA_ALLOWED_ORIGINS
+        sync: false
+      - key: ARENA_TRUST_PROXY
+        value: "1"
+      - key: ARENA_RATE_LIMIT_SECONDS
+        value: "20"
+      - key: ARENA_DAILY_LIMIT
+        value: "300"
+      - key: ARENA_MAX_MESSAGE_CHARS
+        value: "1500"
+      - key: ARENA_MAX_QUEUE
+        value: "5"
+      - key: ARENA_FEED_SIZE
+        value: "20"
+      - key: ARENA_ATTEMPT_TIMEOUT_MS
+        value: "150000"
+      - key: ARENA_CHAIN_REFRESH_MS
+        value: "10000"
+      - key: ARENA_DATA_FILE
+        value: /var/data/attempts.jsonl
+      - key: ARENA_MODEL_GUARDED
+        value: Qwen/Qwen3.8-27B
+      - key: ARENA_MODEL_JAILBROKEN
+        value: Qwen/Qwen3.8-27B-abliterated
