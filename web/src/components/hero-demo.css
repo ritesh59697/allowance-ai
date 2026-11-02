@@ -1,0 +1,232 @@
+/* The landing hero's device pair. The page is the ground: no plate. The
+   site's own tokens drive the kit's, so the stage follows light and dark
+   with the page. */
+
+.ah .ss-stage {
+  --gutter: 24px;
+  --ss-font: 'IBM Plex Sans', ui-sans-serif, sans-serif;
+  --ss-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --ss-canvas: var(--background);
+  --ss-surface: var(--card);
+  --ss-chrome: var(--card);
+  --ss-raised: var(--muted);
+  --ss-line: var(--border);
+  --ss-line-faint: var(--border);
+  --ss-text-strong: var(--foreground);
+  --ss-text: var(--muted-foreground);
+  --ss-text-faint: var(--faint);
+  --ss-warning: var(--warning);
+  overflow: hidden;
+  background: transparent;
+}
+
+/* Pinned top-left, off the bottom; the phone straddles its right edge */
+.ah-win {
+  position: absolute;
+  top: var(--gutter);
+  left: var(--gutter);
+  width: 456px;
+  height: 560px;
+  border-radius: 12px;
+  box-shadow: var(--ss-shadow-hero);
+}
+
+.ah .ss-stage[data-theme='dark'] .ah-win {
+  /* Shadows don't read on black: depth from a hairline and a top highlight */
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 0 0 1px var(--border), 0 24px 48px -24px rgb(0 0 0 / 0.6);
+}
+
+.ah .ss-window__body {
+  background: var(--card);
+}
+
+.ah-body {
+  /* Everything the story touches sits in the window's left 292px, clear
+     of the phone; the right of the window holds only filler under it */
+  width: 312px;
+  padding: 16px 0 0 16px;
+}
+
+.ah-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 20px;
+  margin: 0 0 8px;
+}
+
+.ah-title {
+  color: var(--ss-text-strong);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.ah-mail .ss-row__title {
+  font-weight: 500;
+}
+
+.ah-faint {
+  color: var(--ss-text-faint);
+  font-size: 12px;
+}
+
+/* The agent's tool call: one quiet line of code under the email */
+.ah-call {
+  /* Hugs its words; a lasting layer so the text glides with its box */
+  display: flex;
+  width: fit-content;
+  will-change: transform;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0 8px;
+  padding: 0 12px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--ss-raised);
+}
+
+.ah-code {
+  color: var(--ss-text-strong);
+  font-family: var(--ss-mono);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* The contract's verdict: the one raised surface in the window */
+.ah-card {
+  margin: 0 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--background);
+}
+
+.ah-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: 44px;
+  padding: 0 12px;
+}
+
+.ah-card__title {
+  color: var(--ss-text-strong);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* The stamp lands once the checks are in: a fade and a small rise */
+.ah-stamp {
+  will-change: transform;
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity 0.45s cubic-bezier(0.25, 0.8, 0.25, 1),
+    transform 0.45s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.ah-stamp[data-on] {
+  opacity: 1;
+  transform: none;
+}
+
+.ah-checks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ah-check {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 36px;
+  padding: 0 12px;
+  border-top: 1px solid var(--border);
+  font-size: 12.5px;
+}
+
+.ah-check__label {
+  color: var(--ss-text);
+}
+
+.ah-check__value {
+  will-change: transform;
+  font-family: var(--ss-mono);
+  color: var(--ss-text-strong);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.ah-check__value[data-fail] {
+  color: var(--ss-warning);
+}
+
+.ah-check[data-in] .ah-check__value {
+  opacity: 1;
+  transform: none;
+}
+
+.ah-old {
+  opacity: 0.9;
+}
+
+/* Straddles the window's right edge over filler; its base is cropped */
+.ah-phone {
+  position: absolute;
+  top: 84px;
+  right: var(--gutter);
+  box-shadow: var(--ss-shadow-satellite), 0 30px 50px -20px rgb(0 0 0 / 0.45);
+}
+
+.ah-appicon {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: #141415;
+  color: #ededed;
+}
+
+.ah-appicon__mark {
+  width: 62%;
+  height: 62%;
+}
+
+/* Narrow: the window runs off the right and shows its foot, about square;
+   the inbox heading goes and the verdict tightens so it ends above the
+   phone, which straddles the window's bottom edge over filler and runs off
+   the stage, its notification whole and at a readable size */
+.ah .ss-stage[data-layout='compact'] {
+  --gutter: 16px;
+}
+
+.ah .ss-stage[data-layout='compact'] .ah-win {
+  width: 400px;
+  height: 340px;
+}
+
+.ah .ss-stage[data-layout='compact'] .ah-head {
+  display: none;
+}
+
+.ah .ss-stage[data-layout='compact'] .ah-card__head {
+  height: 40px;
+}
+
+.ah .ss-stage[data-layout='compact'] .ah-check {
+  height: 32px;
+}
+
+.ah .ss-stage[data-layout='compact'] .ah-phone {
+  top: 328px;
+}
+
+.ah .ss-stage[data-layout='compact'] .ah-old {
+  display: none;
+}

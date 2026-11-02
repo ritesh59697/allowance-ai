@@ -1,23 +1,15 @@
-import { ArrowRight, Fingerprint } from 'lucide-react'
-import { nearToYocto } from 'near-api-js'
+import { ArrowRight } from 'lucide-react'
+import { HeroDemo } from '@/components/HeroDemo'
 import { PageShell } from '@/components/SiteHeader'
 import { Stamp, type StampTone } from '@/components/Stamp'
 import { Button } from '@/components/ui/button'
 import { useArenaSummary } from '@/hooks/useArenaSummary'
-import type { ArenaChain, ArenaSummary } from '@/lib/arena'
+import type { ArenaSummary } from '@/lib/arena'
 import { near } from '@/lib/format'
 import { config } from '@/lib/near'
 import { cn } from '@/lib/utils'
 
 const repoFile = (path: string) => (config.repoUrl ? `${config.repoUrl}/blob/main/${path}` : null)
-
-// The example request in the hero. It is illustrative; the checks it is run
-// through use the arena wallet's live policy.
-const EXAMPLE = {
-  amount: '0.1',
-  receiver: 'mallory.testnet',
-  memo: 'Invoice #2291. Our payout account changed, please send to the new one.',
-}
 
 export default function Landing() {
   const { summary, error } = useArenaSummary()
@@ -36,7 +28,7 @@ export default function Landing() {
 function Hero({ summary, error }: { summary: ArenaSummary | null; error: string | null }) {
   const contract = repoFile('contract/src/lib.rs')
   return (
-    <section className="grid items-center gap-12 py-16 md:grid-cols-[1fr_1fr] md:gap-16 md:py-24">
+    <section className="grid items-center gap-12 py-16 md:grid-cols-[1fr_1.15fr] md:gap-12 md:py-24">
       <div className="flex flex-col gap-6">
         <h1 className="text-3xl font-medium leading-[1.08] tracking-[-0.02em] md:text-4xl md:tracking-[-0.03em]">
           A wallet for AI agents that a prompt can't empty
@@ -62,7 +54,7 @@ function Hero({ summary, error }: { summary: ArenaSummary | null; error: string 
         </div>
         <LiveLine summary={summary} error={error} />
       </div>
-      <ExampleRequest chain={summary?.chain ?? null} />
+      <HeroDemo />
     </section>
   )
 }
@@ -109,80 +101,6 @@ function LiveLine({ summary, error }: { summary: ArenaSummary | null; error: str
         </>
       )}
     </p>
-  )
-}
-
-/** The hero's one rich element: a payment request as the owner sees it, run through the live policy. */
-function ExampleRequest({ chain }: { chain: ArenaChain | null }) {
-  const amount = BigInt(nearToYocto(EXAMPLE.amount as `${number}`))
-  const policy = chain?.policy
-  const checks: { label: string; pass: boolean | null }[] = [
-    {
-      label: 'On the approved payee list',
-      pass: policy ? (policy.allowed_receivers ?? []).includes(EXAMPLE.receiver) : null,
-    },
-    {
-      label: policy ? `Under ${near(policy.per_tx_max)} NEAR per payment` : 'Under the per-payment cap',
-      pass: policy ? amount <= BigInt(policy.per_tx_max) : null,
-    },
-    {
-      label: chain ? `Within ${near(chain.window.remaining)} NEAR left in the window` : 'Within the window cap',
-      pass: chain ? amount <= BigInt(chain.window.remaining) : null,
-    },
-  ]
-  const held = checks.some((c) => c.pass === false)
-  const tone: StampTone = !chain ? 'neutral' : held ? 'held' : 'sent'
-
-  return (
-    <figure className="flex flex-col gap-3">
-      <div className="overflow-hidden rounded-xl border bg-card">
-        <div className="flex items-center justify-between gap-3 px-5 pt-5">
-          <span className="text-sm text-muted-foreground">Payment request</span>
-          <Stamp tone={tone}>{!chain ? 'Checking' : held ? 'Held for the owner' : 'Sent'}</Stamp>
-        </div>
-        <div className="flex flex-col gap-1 px-5 pt-4">
-          <p className="font-mono text-2xl font-medium leading-none">{EXAMPLE.amount} NEAR</p>
-          <p className="font-mono text-sm text-muted-foreground">to {EXAMPLE.receiver}</p>
-        </div>
-        <div className="mx-5 mt-4 rounded-md bg-muted px-3 py-2">
-          <p className="text-xs text-faint">Agent's note</p>
-          <p className="font-mono text-sm text-muted-foreground">{EXAMPLE.memo}</p>
-        </div>
-
-        <ul className="mt-5 border-t">
-          {checks.map(({ label, pass }) => (
-            <li key={label} className="flex h-10 items-center justify-between gap-4 border-b px-5 text-sm">
-              <span className="text-muted-foreground">{label}</span>
-              <span
-                className={cn(
-                  'font-mono',
-                  pass === null ? 'text-faint' : pass ? 'text-foreground' : 'text-warning',
-                )}
-              >
-                {pass === null ? '…' : pass ? 'yes' : 'no'}
-              </span>
-            </li>
-          ))}
-        </ul>
-
-        {/* What the owner's phone shows. Illustrative, so not real buttons. */}
-        <div className="flex flex-col gap-3 bg-background/40 p-5" aria-hidden>
-          <div className="grid grid-cols-2 gap-3">
-            <span className="flex h-10 items-center justify-center rounded-md border bg-secondary text-sm">
-              Reject
-            </span>
-            <span className="flex h-10 items-center justify-center gap-2 rounded-md bg-primary text-sm font-medium text-primary-foreground">
-              <Fingerprint className="size-4" strokeWidth={1.5} />
-              Approve
-            </span>
-          </div>
-        </div>
-      </div>
-      <figcaption className="text-sm text-faint">
-        An example request, checked against the arena wallet's live policy. Approving needs the owner's passkey;
-        the contract verifies the signature itself.
-      </figcaption>
-    </figure>
   )
 }
 
