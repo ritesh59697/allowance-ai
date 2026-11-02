@@ -166,7 +166,7 @@ No account names, endpoints or keys are hard-coded: everything is read from `.en
 
 ## Prior work
 
-I also built [Haptix](https://github.com/ritesh59697), a passkey smart wallet on Solana that includes spending-capped session keys for agents. Allowance is a separate project started for this hackathon: a new repository and a new codebase that shares no code with Haptix. Its spending policy and passkey verification are enforced entirely by a NEAR contract and NEAR access keys. All commits here are from the hackathon window (after 2026-10-19).
+Before this hackathon I built a passkey smart wallet on Solana that includes spending-capped session keys for agents. Allowance is a separate project started for this hackathon: a new repository and a new codebase that shares no code with that wallet. Its spending policy and passkey verification are enforced entirely by a NEAR contract and NEAR access keys. All commits here are from the hackathon window (after 2026-10-19).
 
 ## License
 
