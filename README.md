@@ -14,7 +14,8 @@ The owner's approval is a WebAuthn passkey signature, verified inside the contra
 
 Built at NEAR HACKATHON 2026 for the **AI Security & Defense** track. Runs on NEAR **testnet**.
 
-- Owner page (approve / reject held payments): https://allowance-agent.vercel.app
+- Overview with live on-chain numbers: https://allowance-agent.vercel.app
+- Owner page (approve / reject held payments): https://allowance-agent.vercel.app/owner
 - Arena (try to talk the agent into paying you): https://allowance-agent.vercel.app/arena
 - Contract source: [`contract/src/lib.rs`](contract/src/lib.rs)
 
@@ -147,7 +148,7 @@ Both leashes are owned by a passkey on the developer's phone, so you can watch h
 ```
 contract/   Rust smart contract (near-sdk 5): policy, pending queue, passkey verification, 30 tests
 agent/      LLM agent, the three attack scripts, and the arena API server
-web/        Owner page and arena page (React, Vite), deployed on Vercel
+web/        Landing, owner and arena pages (React, Vite), deployed on Vercel
 scripts/    Deploy, end-to-end, and manual agent-spend scripts
 render.yaml Hosting blueprint for the arena API
 ```
