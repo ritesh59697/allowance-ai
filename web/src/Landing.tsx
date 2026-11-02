@@ -30,15 +30,18 @@ function Hero({ summary, error }: { summary: ArenaSummary | null; error: string 
   const contract = repoFile('contract/src/lib.rs')
   return (
     <section className="grid items-center gap-12 py-16 md:grid-cols-[1fr_1.15fr] md:gap-12 md:py-24">
-      <div className="flex flex-col gap-6">
-        <h1 className="text-3xl font-medium leading-[1.08] tracking-[-0.02em] md:text-4xl md:tracking-[-0.03em]">
-          A wallet for AI agents that a prompt can't empty
+      <div className="flex flex-col">
+        {/* Four levels, each a clear step from the next: what it is, the
+            promise, how, then live proof set apart under a rule */}
+        <p className="text-sm font-medium text-muted-foreground">On-chain spending rules for AI agents</p>
+        <h1 className="mt-4 text-balance text-3xl font-medium leading-[1.04] tracking-[-0.03em] md:text-4xl">
+          A wallet a prompt can't empty
         </h1>
-        <p className="max-w-[36rem] text-lg text-muted-foreground">
-          The agent's key can only request a payment. A NEAR contract sends what's inside your limits to approved
-          payees, and holds everything else until you approve it with Face ID.
+        <p className="mt-5 max-w-[30rem] text-base leading-relaxed text-muted-foreground">
+          Your agent's key can only ask for a payment. A NEAR contract pays approved vendors within your limits and
+          holds the rest until you approve it with Face ID.
         </p>
-        <div className="flex flex-wrap gap-3">
+        <div className="mt-8 flex flex-wrap gap-3">
           <Button asChild size="lg" className="h-11 px-5">
             <a href="/arena">
               Try to rob the agent
@@ -53,55 +56,59 @@ function Hero({ summary, error }: { summary: ArenaSummary | null; error: string 
             </Button>
           )}
         </div>
-        <LiveLine summary={summary} error={error} />
+        <LiveStats summary={summary} error={error} />
       </div>
       <HeroDemo />
     </section>
   )
 }
 
-/** One quiet line of live numbers from the arena wallet. */
-function LiveLine({ summary, error }: { summary: ArenaSummary | null; error: string | null }) {
+/** Live numbers from the arena wallet, set apart from the copy as data. */
+function LiveStats({ summary, error }: { summary: ArenaSummary | null; error: string | null }) {
   const chain = summary?.chain
+  const stats: [string, string | number, boolean?][] = chain
+    ? [
+        ['In the wallet', `${near(chain.balance)} NEAR`],
+        ['Requests', chain.stats.attempts],
+        ['Held', chain.stats.held],
+        ['Paid to strangers', summary.strangerPaymentsSent, true],
+      ]
+    : []
   return (
-    <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-faint">
-      <span
-        className={cn('size-1.5 rounded-full', chain ? 'bg-positive' : 'bg-faint')}
-        aria-hidden
-      />
-      {!chain ? (
-        error ? (
-          "Arena wallet: can't reach the server"
+    <div className="mt-10 border-t pt-5">
+      <p className="flex items-center gap-2 text-xs text-faint">
+        <span className={cn('size-1.5 rounded-full', chain ? 'bg-positive' : 'bg-faint')} aria-hidden />
+        {chain ? (
+          <span>
+            Live from the{' '}
+            <a
+              href={`${config.explorerAccountUrl}${summary.leashAccount}`}
+              target="_blank"
+              rel="noreferrer"
+              className="underline underline-offset-4 transition-colors duration-150 hover:text-foreground"
+            >
+              arena wallet
+            </a>
+          </span>
+        ) : error ? (
+          "Can't reach the arena wallet right now"
         ) : (
-          'Arena wallet: waking the server, up to a minute'
-        )
-      ) : (
-        <>
-          <a
-            href={`${config.explorerAccountUrl}${summary.leashAccount}`}
-            target="_blank"
-            rel="noreferrer"
-            className="underline-offset-4 transition-colors duration-150 hover:text-foreground hover:underline"
-          >
-            Arena wallet
-          </a>
-          <span className="font-mono text-muted-foreground">{near(chain.balance)} NEAR</span>
-          <span aria-hidden>·</span>
-          <span>
-            <span className="font-mono text-muted-foreground">{chain.stats.attempts}</span>{' '}
-            {chain.stats.attempts === 1 ? 'request' : 'requests'}
-          </span>
-          <span aria-hidden>·</span>
-          <span>
-            <span className="font-mono text-muted-foreground">{chain.stats.held}</span> held
-          </span>
-          <span aria-hidden>·</span>
-          <span>
-            <span className="font-mono text-muted-foreground">{summary.strangerPaymentsSent}</span> paid to strangers
-          </span>
-        </>
+          'Waking the arena server, up to a minute'
+        )}
+      </p>
+      {chain && (
+        <dl className="mt-3 grid grid-cols-2 gap-x-8 gap-y-3 sm:flex sm:flex-wrap">
+          {stats.map(([label, value, good]) => (
+            <div key={label} className="flex flex-col gap-0.5">
+              <dt className="text-xs text-faint">{label}</dt>
+              <dd className={cn('font-mono text-lg leading-tight', good ? 'text-positive' : 'text-foreground')}>
+                {value}
+              </dd>
+            </div>
+          ))}
+        </dl>
       )}
-    </p>
+    </div>
   )
 }
 
