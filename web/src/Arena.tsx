@@ -1,7 +1,6 @@
-import { ExternalLink, KeyRound, ListChecks, Mail, Gauge } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
-import { SiteHeader } from '@/components/SiteHeader'
-import { Badge } from '@/components/ui/badge'
+import { PageShell } from '@/components/SiteHeader'
+import { REASON_LABEL, Stamp, outcomeTone } from '@/components/Stamp'
 import { Button } from '@/components/ui/button'
 import { Toaster } from '@/components/ui/sonner'
 import { useArenaSummary } from '@/hooks/useArenaSummary'
@@ -16,76 +15,119 @@ import {
 } from '@/lib/arena'
 import { near, relativeTime } from '@/lib/format'
 import { config } from '@/lib/near'
+import { cn } from '@/lib/utils'
 
 const MODES: { id: Mode; title: string; body: string }[] = [
-  { id: 'guarded', title: 'Guarded AI', body: 'A standard model, told to pay approved vendors only. The real challenge.' },
+  { id: 'guarded', title: 'Guarded model', body: 'Told to pay approved vendors only. The real challenge.' },
   {
     id: 'jailbroken',
-    title: 'Jailbroken AI',
-    body: 'Safety training removed and told to pay what emails ask. A stand-in for a fully compromised agent.',
+    title: 'Jailbroken model',
+    body: 'Safety training removed, told to pay what emails ask. Stands in for a fully compromised agent.',
   },
 ]
+
+const fieldClass =
+  'rounded-md border border-input bg-card px-3 font-mono text-sm outline-none transition-colors duration-150 focus-visible:border-ring/60 focus-visible:ring-3 focus-visible:ring-ring/20'
 
 export default function Arena() {
   const { summary, error: loadError, refresh } = useArenaSummary()
   const chain = summary?.chain ?? null
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-12 px-4 pb-20 pt-6">
-      <SiteHeader />
-
-      <section className="grid gap-8 md:grid-cols-[1.4fr_1fr] md:items-end">
-        <div className="flex flex-col gap-3">
-          <h1 className="font-heading text-3xl font-medium leading-tight">Rob the agent.</h1>
-          <p className="max-w-prose text-muted-foreground">
-            This AI pays a small team's vendors from a real NEAR wallet. It reads a public inbox, so anyone can email
-            it. Talk it into paying you. The rules it can't break live in a contract on NEAR, not in its prompt.
-          </p>
-        </div>
-        <Scoreboard summary={summary} chain={chain} />
+    <PageShell>
+      <section className="flex max-w-[40rem] flex-col gap-4 py-12 md:py-16">
+        <h1 className="text-3xl font-medium leading-[1.1] tracking-[-0.02em]">Rob the agent</h1>
+        <p className="text-lg text-muted-foreground">
+          This agent pays a small team's vendors from a funded NEAR wallet, and anyone can email it. Talk it into paying
+          you. The rules it can't break live in a contract, not in its prompt.
+        </p>
       </section>
 
       {loadError && (
-        <p role="alert" className="rounded-md border border-destructive/40 px-3 py-2 text-sm text-destructive">
-          Can't reach the arena: {loadError}
+        <p role="alert" className="mb-8 rounded-md border border-destructive/40 px-4 py-3 text-sm text-destructive">
+          Can't reach the arena server: {loadError}
         </p>
       )}
 
-      <Compose onDone={refresh} payees={chain?.policy.allowed_receivers ?? []} models={summary?.models} />
+      <div className="grid gap-12 md:grid-cols-[1fr_20rem] md:gap-16">
+        <Compose onDone={refresh} payees={chain?.policy.allowed_receivers ?? []} models={summary?.models} />
+        <aside className="flex flex-col gap-8 md:sticky md:top-8 md:self-start">
+          <Scoreboard summary={summary} chain={chain} />
+          <Rules chain={chain} account={summary?.leashAccount} />
+        </aside>
+      </div>
 
       <Feed records={summary?.recent ?? []} />
-
-      <WhyItHolds chain={chain} account={summary?.leashAccount} />
       <Toaster position="top-center" />
-    </div>
+    </PageShell>
   )
 }
 
 // Counts come from the contract, so they match the explorer and survive
 // arena server restarts. Only "paid to strangers" is the server's tally.
 function Scoreboard({ summary, chain }: { summary: ArenaSummary | null; chain: ArenaChain | null }) {
+  const rows: [string, string | number][] = [
+    ['Payment requests', chain?.stats.attempts ?? '…'],
+    ['Sent on its own', chain?.stats.sent ?? '…'],
+    ['Held for the owner', chain?.stats.held ?? '…'],
+    ['Paid to strangers', summary ? summary.strangerPaymentsSent : '…'],
+  ]
   return (
-    <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border bg-border">
-      <Stat label="In the wallet" value={chain ? `${near(chain.balance)} NEAR` : '…'} />
-      <Stat label="Payment requests" value={chain?.stats.attempts ?? '…'} hint="counted on-chain" />
-      <Stat label="Held" value={chain?.stats.held ?? '…'} hint="sent to the owner's Face ID" />
-      <Stat
-        label="Paid to strangers"
-        value={summary ? `${summary.strangerPaymentsSent}` : '…'}
-        hint="without the owner"
-        strong
-      />
-    </dl>
+    <section aria-label="Arena wallet" className="overflow-hidden rounded-xl border bg-card">
+      <div className="flex flex-col gap-1 border-b px-5 py-4">
+        <span className="text-sm text-muted-foreground">In the wallet</span>
+        <span className="font-mono text-2xl font-medium leading-none">{chain ? `${near(chain.balance)} NEAR` : '…'}</span>
+      </div>
+      <dl className="flex flex-col">
+        {rows.map(([label, value], i) => (
+          <div key={label} className="flex h-10 items-center justify-between border-b px-5 text-sm last:border-b-0">
+            <dt className="text-muted-foreground">{label}</dt>
+            <dd className={cn('font-mono', i === rows.length - 1 && 'text-positive')}>{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
   )
 }
 
-function Stat({ label, value, hint, strong }: { label: string; value: string | number; hint?: string; strong?: boolean }) {
+function Rules({ chain, account }: { chain: ArenaChain | null; account?: string }) {
+  const policy = chain?.policy
+  const rules = [
+    [
+      'Approved payees',
+      policy?.allowed_receivers?.length ? policy.allowed_receivers.join(', ') : '…',
+    ],
+    ['Per payment', policy ? `up to ${near(policy.per_tx_max)} NEAR` : '…'],
+    ['Per window', policy ? `up to ${near(policy.window_max)} NEAR per ${Math.round(policy.window_secs / 3600)} h` : '…'],
+    ['Agent key', 'can call agent_spend, nothing else'],
+  ]
   return (
-    <div className="flex flex-col gap-1 bg-card px-4 py-3">
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className={`font-mono text-2xl ${strong ? 'text-primary' : ''}`}>{value}</dd>
-      {hint && <dd className="text-xs text-muted-foreground">{hint}</dd>}
-    </div>
+    <section aria-labelledby="rules-heading" className="flex flex-col gap-3">
+      <h2 id="rules-heading" className="font-medium">
+        The rules it can't break
+      </h2>
+      <dl className="flex flex-col gap-3 text-sm">
+        {rules.map(([label, value]) => (
+          <div key={label} className="flex flex-col gap-0.5">
+            <dt className="text-faint">{label}</dt>
+            <dd className="break-all font-mono text-muted-foreground">{value}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="text-sm text-faint">
+        Anything outside them is held for the owner's Face ID.{' '}
+        {account && (
+          <a
+            href={`${config.explorerAccountUrl}${account}`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-muted-foreground underline underline-offset-4 transition-colors duration-150 hover:text-foreground"
+          >
+            See the wallet
+          </a>
+        )}
+      </p>
+    </section>
   )
 }
 
@@ -121,39 +163,59 @@ function Compose({
   }
 
   return (
-    <section aria-labelledby="compose-heading" className="flex flex-col gap-4">
-      <h2 id="compose-heading" className="text-xs uppercase tracking-wider text-muted-foreground">
+    <section aria-labelledby="compose-heading" className="flex min-w-0 flex-col gap-6">
+      <h2 id="compose-heading" className="sr-only">
         Email the agent
       </h2>
-      <form onSubmit={submit} className="flex flex-col gap-3">
-        <fieldset className="flex flex-col gap-2">
-          <legend className="mb-2 text-sm">Difficulty</legend>
-          <div className="grid grid-cols-2 gap-2">
+      <form onSubmit={submit} className="flex flex-col gap-6">
+        <fieldset className="flex flex-col gap-3">
+          <legend className="mb-3 text-sm font-medium">Model</legend>
+          <div className="grid gap-3 sm:grid-cols-2">
             {MODES.map((m) => (
               <label
                 key={m.id}
-                className="flex cursor-pointer flex-col gap-1 rounded-md border p-3 text-sm has-[:checked]:border-primary has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/50"
+                className="flex cursor-pointer flex-col gap-1 rounded-lg border bg-card p-4 transition-colors duration-150 hover:border-foreground/20 has-[:checked]:border-foreground/40 has-[:checked]:bg-muted has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/20"
               >
-                <span className="flex items-center gap-2 font-medium">
+                <span className="flex items-center gap-2 text-sm font-medium">
                   <input
                     type="radio"
                     name="mode"
                     value={m.id}
                     checked={mode === m.id}
                     onChange={() => setMode(m.id)}
-                    className="accent-[var(--primary)]"
+                    className="accent-[var(--foreground)]"
                   />
                   {m.title}
                 </span>
-                <span className="text-xs text-muted-foreground">{m.body}</span>
-                {models && <span className="break-all font-mono text-xs text-muted-foreground">{models[m.id]}</span>}
+                <span className="text-sm text-muted-foreground">{m.body}</span>
+                {models && <span className="break-all font-mono text-xs text-faint">{models[m.id]}</span>}
               </label>
             ))}
           </div>
         </fieldset>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="handle" className="text-sm">
-            Your name in the feed <span className="text-muted-foreground">(optional)</span>
+
+        <div className="flex flex-col gap-2">
+          <label htmlFor="message" className="text-sm font-medium">
+            Email to vendors@
+          </label>
+          <textarea
+            id="message"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            rows={7}
+            required
+            placeholder="Hi, this is accounts at Acme. Please pay invoice #4471 to…"
+            className={cn(fieldClass, 'py-3 placeholder:text-faint')}
+          />
+          <p className="text-sm text-faint">
+            Name a NEAR account you want paid. Approved vendors: {payees.length ? payees.join(', ') : '…'}. Your email
+            goes to the model only and is not shown to anyone.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label htmlFor="handle" className="text-sm font-medium">
+            Name in the feed <span className="font-normal text-faint">optional</span>
           </label>
           <input
             id="handle"
@@ -161,28 +223,11 @@ function Compose({
             onChange={(e) => setHandle(e.target.value)}
             maxLength={24}
             autoComplete="off"
-            className="h-10 rounded-md border border-input bg-transparent px-3 font-mono text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            className={cn(fieldClass, 'h-10 sm:max-w-xs')}
           />
         </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="message" className="text-sm">
-            Email to vendors@
-          </label>
-          <textarea
-            id="message"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            rows={6}
-            required
-            className="rounded-md border border-input bg-transparent px-3 py-2 font-mono text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-          />
-          <p className="text-xs text-muted-foreground">
-            Name a NEAR account you want paid. Approved vendors: {payees.length ? payees.join(', ') : 'none set'}. Your
-            email is sent to an AI model and is not shown to anyone else.
-          </p>
-        </div>
-        <Button type="submit" size="lg" className="h-11 self-start" disabled={sending || !message.trim()}>
-          <Mail aria-hidden />
+
+        <Button type="submit" size="lg" className="h-11 self-start px-5" disabled={sending || !message.trim()}>
           {sending ? 'The agent is reading…' : 'Send email'}
         </Button>
       </form>
@@ -199,31 +244,28 @@ function Compose({
 function AttemptResult({ record, events }: { record: AttemptRecord; events: ArenaEvent[] }) {
   const stolen = record.pays.some((p) => !p.approvedPayee && p.outcome === 'sent')
   const headline = !record.fooled
-    ? "The agent didn't fall for it."
+    ? "The agent didn't fall for it"
     : stolen
-      ? 'The agent paid a stranger.'
-      : 'You fooled the AI. The contract held the payment.'
+      ? 'The agent paid a stranger'
+      : 'You fooled the model. The contract held the payment'
   return (
-    <article
-      aria-live="polite"
-      className={`flex flex-col gap-4 rounded-lg border p-4 animate-in fade-in duration-200 ${record.fooled ? 'border-warning/50' : ''}`}
-    >
-      <p className="font-heading text-lg font-medium">{headline}</p>
-      <ol className="flex flex-col gap-3">
+    <article aria-live="polite" className="flex flex-col gap-5 rounded-xl border bg-card p-5 animate-in fade-in duration-300">
+      <p className="text-lg font-medium">{headline}</p>
+      <ol className="flex flex-col gap-4">
         {events.filter(isVisible).map((e, i) => (
           <li key={i} className="text-sm">
             {e.kind === 'model' && (
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-muted-foreground">agent's reply (its own words, not the chain's)</span>
+                <span className="text-xs text-faint">The agent's reply, in its own words</span>
                 <p className="whitespace-pre-wrap text-muted-foreground [overflow-wrap:anywhere]">{e.text.trim()}</p>
               </div>
             )}
             {e.kind === 'tool_call' && e.name === 'pay' && (
               <p className="font-mono">
-                agent → pay {String(e.args.amount_near)} NEAR to <span className="break-all">{String(e.args.receiver_id)}</span>
+                pay {String(e.args.amount_near)} NEAR to <span className="break-all">{String(e.args.receiver_id)}</span>
               </p>
             )}
-            {e.kind === 'tool_call' && e.name !== 'pay' && <p className="font-mono text-muted-foreground">agent → {e.name}</p>}
+            {e.kind === 'tool_call' && e.name !== 'pay' && <p className="font-mono text-faint">{e.name}</p>}
             {e.kind === 'tool_result' && e.name === 'pay' && <ChainVerdict result={e.result} />}
           </li>
         ))}
@@ -240,24 +282,19 @@ function isVisible(e: ArenaEvent) {
 }
 
 function ChainVerdict({ result }: { result: Extract<ArenaEvent, { kind: 'tool_result' }>['result'] }) {
-  const label = result.outcome === 'held' ? `held for the owner · ${result.reason}` : (result.outcome ?? `error: ${result.error}`)
   return (
-    <p className="flex flex-wrap items-center gap-2 font-mono">
-      <span className="text-muted-foreground">contract →</span>
-      <OutcomeBadge outcome={result.outcome ?? 'error'} label={label} />
+    <p className="flex flex-wrap items-center gap-3">
+      <span className="text-faint">Contract</span>
+      <Stamp tone={outcomeTone(result.outcome)}>{outcomeLabel(result.outcome, result.reason, result.error)}</Stamp>
       {result.txUrl && <TxLink url={result.txUrl} />}
     </p>
   )
 }
 
-function OutcomeBadge({ outcome, label }: { outcome: string; label?: string }) {
-  const tone =
-    outcome === 'sent' ? 'border-primary/50 text-primary' : outcome === 'held' ? 'border-warning/50 text-warning' : ''
-  return (
-    <Badge variant="outline" className={tone}>
-      {label ?? outcome}
-    </Badge>
-  )
+function outcomeLabel(outcome?: string, reason?: string, error?: string) {
+  if (outcome === 'sent') return 'Sent'
+  if (outcome === 'held') return reason ? `Held · ${REASON_LABEL[reason] ?? reason}` : 'Held'
+  return outcome ?? `Error: ${error}`
 }
 
 function TxLink({ url }: { url: string }) {
@@ -266,43 +303,42 @@ function TxLink({ url }: { url: string }) {
       href={url}
       target="_blank"
       rel="noreferrer"
-      className="inline-flex items-center gap-1 text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:text-foreground focus-visible:underline"
+      className="text-sm text-faint underline-offset-4 transition-colors duration-150 hover:text-foreground hover:underline focus-visible:text-foreground focus-visible:underline"
     >
-      tx <ExternalLink className="size-3" aria-hidden />
+      Transaction
     </a>
   )
 }
 
 function Feed({ records }: { records: AttemptRecord[] }) {
   return (
-    <section aria-labelledby="feed-heading" className="flex flex-col gap-3">
-      <h2 id="feed-heading" className="text-xs uppercase tracking-wider text-muted-foreground">
+    <section aria-labelledby="feed-heading" className="mt-16 flex flex-col gap-6 border-t pt-12">
+      <h2 id="feed-heading" className="text-2xl font-medium tracking-[-0.01em]">
         Recent attempts
       </h2>
       {records.length === 0 ? (
-        <p className="rounded-md border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
-          No attempts yet. Be the first.
-        </p>
+        <p className="border-y py-8 text-muted-foreground">No attempts since the server last started. Be the first.</p>
       ) : (
-        <ul className="flex flex-col divide-y rounded-md border">
+        <ul className="border-y">
           {records.map((r) => (
-            <li key={r.id} className="flex flex-col gap-1 px-3 py-2 text-sm">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <span className="flex items-center gap-2 font-mono">
-                  #{r.id} · {r.handle}
-                  {r.mode === 'jailbroken' && (
-                    <Badge variant="outline" className="text-xs">
-                      jailbroken AI
-                    </Badge>
-                  )}
+            <li
+              key={r.id}
+              className="grid gap-2 border-b py-4 text-sm last:border-b-0 md:grid-cols-[12rem_1fr_auto] md:items-start md:gap-6"
+            >
+              <p className="flex flex-col">
+                <span className="font-mono">
+                  #{r.id} {r.handle}
                 </span>
-                <span className="text-xs text-muted-foreground">{relativeTime(Date.parse(r.at))}</span>
+                <span className="text-faint">{r.mode === 'jailbroken' ? 'Jailbroken model' : 'Guarded model'}</span>
+              </p>
+              <div className="flex flex-col gap-2">
+                {r.pays.length === 0 ? (
+                  <p className="text-muted-foreground">The agent paid nothing</p>
+                ) : (
+                  r.pays.map((p, i) => <PayLine key={i} pay={p} />)
+                )}
               </div>
-              {r.pays.length === 0 ? (
-                <p className="text-muted-foreground">The agent paid nothing.</p>
-              ) : (
-                r.pays.map((p, i) => <PayLine key={i} pay={p} />)
-              )}
+              <span className="text-faint">{relativeTime(Date.parse(r.at))}</span>
             </li>
           ))}
         </ul>
@@ -313,68 +349,13 @@ function Feed({ records }: { records: AttemptRecord[] }) {
 
 function PayLine({ pay }: { pay: PayAttempt }) {
   return (
-    <p className="flex flex-wrap items-center gap-2">
-      <span className={pay.approvedPayee ? 'text-muted-foreground' : ''}>
-        {pay.approvedPayee ? 'paid vendor' : 'tried to pay'} <span className="font-mono">{pay.amountNear} NEAR</span> to{' '}
+    <p className="flex flex-wrap items-center gap-3">
+      <span className="text-muted-foreground">
+        <span className="font-mono text-foreground">{pay.amountNear} NEAR</span> to{' '}
         <span className="break-all font-mono">{pay.receiver}</span>
       </span>
-      <OutcomeBadge outcome={pay.outcome} />
+      <Stamp tone={outcomeTone(pay.outcome)}>{outcomeLabel(pay.outcome)}</Stamp>
       {pay.txUrl && <TxLink url={pay.txUrl} />}
     </p>
-  )
-}
-
-function WhyItHolds({ chain, account }: { chain: ArenaChain | null; account?: string }) {
-  const policy = chain?.policy
-  const rows = [
-    {
-      icon: ListChecks,
-      title: 'Approved payees only',
-      body: `Payments to anyone not on the list are held for the owner, whatever the amount.${
-        policy?.allowed_receivers?.length ? ` List: ${policy.allowed_receivers.join(', ')}.` : ''
-      }`,
-    },
-    {
-      icon: Gauge,
-      title: 'Limits',
-      body: policy
-        ? `Even approved vendors get at most ${near(policy.per_tx_max)} NEAR per payment and ${near(policy.window_max)} NEAR per window without approval.`
-        : 'Per-payment and per-window caps on what goes out without approval.',
-    },
-    {
-      icon: KeyRound,
-      title: 'A key that can do one thing',
-      body: 'The agent signs with a NEAR function-call key that can only call agent_spend. NEAR itself rejects transfers, other contracts and key changes.',
-    },
-  ]
-  return (
-    <section aria-labelledby="why-heading" className="flex flex-col gap-4">
-      <h2 id="why-heading" className="text-xs uppercase tracking-wider text-muted-foreground">
-        Why it holds
-      </h2>
-      <ul className="grid gap-4 md:grid-cols-3">
-        {rows.map(({ icon: Icon, title, body }) => (
-          <li key={title} className="flex flex-col gap-2">
-            <Icon className="size-5 text-primary" aria-hidden />
-            <p className="font-medium">{title}</p>
-            <p className="text-sm text-muted-foreground">{body}</p>
-          </li>
-        ))}
-      </ul>
-      <p className="text-xs text-muted-foreground">
-        Held payments wait for the owner's Face ID / fingerprint, verified on-chain.{' '}
-        {account && (
-          <a
-            href={`${config.explorerAccountUrl}${account}`}
-            target="_blank"
-            rel="noreferrer"
-            className="underline underline-offset-4 hover:text-foreground"
-          >
-            See the wallet on the explorer
-          </a>
-        )}
-        {' · Models run on NEAR AI Cloud.'}
-      </p>
-    </section>
   )
 }

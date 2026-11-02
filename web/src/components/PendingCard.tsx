@@ -1,14 +1,8 @@
-import { ScanFace, ShieldX, TriangleAlert } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { Fingerprint } from 'lucide-react'
+import { REASON_LABEL, Stamp } from '@/components/Stamp'
 import { Button } from '@/components/ui/button'
 import { near, relativeTime } from '@/lib/format'
 import type { PendingSpend } from '@/lib/near'
-
-const REASON_LABEL: Record<PendingSpend['reason'], string> = {
-  UnknownReceiver: 'Not an approved payee',
-  OverPerTxLimit: 'Over per-payment limit',
-  OverWindowLimit: 'Over window limit',
-}
 
 type Props = {
   request: PendingSpend
@@ -23,44 +17,39 @@ export function PendingCard({ request, busy, disabledReason, onApprove, onReject
   return (
     <article
       aria-label={`Held request ${request.id}`}
-      className="flex flex-col gap-4 rounded-lg border border-warning/40 bg-card p-4 animate-in fade-in slide-in-from-bottom-1 duration-200"
+      className="flex flex-col overflow-hidden rounded-xl border bg-card animate-in fade-in slide-in-from-bottom-1 duration-300"
     >
-      <header className="flex flex-col items-start gap-2">
-        <Badge variant="outline" className="border-warning/50 text-warning">
-          <TriangleAlert aria-hidden />
-          {REASON_LABEL[request.reason]}
-        </Badge>
-        <p className="font-mono text-2xl font-medium leading-tight">{near(request.amount)} NEAR</p>
+      <header className="flex items-center justify-between gap-3 px-5 pt-5">
+        <span className="text-sm text-muted-foreground">
+          Request #{request.id} · {relativeTime(Number(request.created_at_ms))}
+        </span>
+        <Stamp tone="held">{REASON_LABEL[request.reason] ?? request.reason}</Stamp>
+      </header>
+      <div className="flex flex-col gap-1 px-5 pt-4">
+        <p className="font-mono text-2xl font-medium leading-none">{near(request.amount)} NEAR</p>
         {/* Never truncate: the receiver is what the owner is approving. */}
         <p className="break-all font-mono text-sm text-muted-foreground">to {request.receiver_id}</p>
-      </header>
+      </div>
 
       {request.memo && (
-        <figure className="flex flex-col gap-1">
-          <figcaption className="text-xs text-muted-foreground">
-            Agent's note (written by the agent, may be manipulated)
-          </figcaption>
-          <blockquote className="break-words rounded-sm bg-muted px-3 py-2 font-mono text-sm">
-            {request.memo}
-          </blockquote>
+        <figure className="mx-5 mt-4 rounded-md bg-muted px-3 py-2">
+          <figcaption className="text-xs text-faint">Agent's note, written by the agent and may be manipulated</figcaption>
+          <blockquote className="break-words font-mono text-sm text-muted-foreground">{request.memo}</blockquote>
         </figure>
       )}
 
-      <p className="text-xs text-muted-foreground">
-        Request #{request.id} · held {relativeTime(Number(request.created_at_ms))}
-      </p>
-
-      <div className="grid grid-cols-2 gap-3">
-        <Button variant="destructive" size="lg" className="h-11" disabled={disabled} onClick={onReject}>
-          <ShieldX aria-hidden />
-          {busy === 'reject' ? 'Rejecting…' : 'Reject'}
-        </Button>
-        <Button size="lg" className="h-11" disabled={disabled} onClick={onApprove}>
-          <ScanFace aria-hidden />
-          {busy === 'approve' ? 'Approving…' : 'Approve'}
-        </Button>
+      <div className="mt-5 flex flex-col gap-3 border-t p-5">
+        <div className="grid grid-cols-2 gap-3">
+          <Button variant="outline" size="lg" className="h-11" disabled={disabled} onClick={onReject}>
+            {busy === 'reject' ? 'Rejecting…' : 'Reject'}
+          </Button>
+          <Button size="lg" className="h-11" disabled={disabled} onClick={onApprove}>
+            <Fingerprint strokeWidth={1.5} aria-hidden />
+            {busy === 'approve' ? 'Approving…' : 'Approve'}
+          </Button>
+        </div>
+        {disabledReason && <p className="text-sm text-faint">{disabledReason}</p>}
       </div>
-      {disabledReason && <p className="text-xs text-muted-foreground">{disabledReason}</p>}
     </article>
   )
 }

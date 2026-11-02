@@ -6,10 +6,10 @@ export function WindowMeter({ window, policy }: { window: WindowView; policy: Po
   const used = percent(window.spent, policy.window_max)
   return (
     <section aria-labelledby="window-heading" className="flex flex-col gap-3">
-      <h2 id="window-heading" className="text-xs uppercase tracking-wider text-muted-foreground">
+      <h2 id="window-heading" className="font-medium">
         Spent without asking
       </h2>
-      <p className="font-mono text-3xl font-medium leading-tight">
+      <p className="font-mono text-2xl font-medium leading-none">
         {near(window.spent)}
         <span className="text-muted-foreground"> / {near(policy.window_max)} NEAR</span>
       </p>

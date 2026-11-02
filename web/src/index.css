@@ -9,24 +9,26 @@
 @import "@fontsource/ibm-plex-mono/600.css";
 
 /*
- * Allowance tokens. Dials: variance 4 / motion 4 / density 4.
- * Stance: precise. Dark-first (phone at night), light via prefers-color-scheme.
- * One accent (mint) = approve / primary action. Coral = reject / destructive.
+ * Allowance tokens. Direction: exact, calm, trustworthy; a statement, not a
+ * terminal. Graphite neutrals, IBM Plex Sans throughout, Plex Mono only for
+ * amounts, accounts and keys. Color carries meaning only: positive = sent,
+ * warning = held, destructive = reject. The primary action is off-white.
  */
 
 @theme inline {
   --font-sans: "IBM Plex Sans", ui-sans-serif, sans-serif;
-  --font-heading: "IBM Plex Mono", ui-monospace, monospace;
+  --font-heading: "IBM Plex Sans", ui-sans-serif, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 
-  /* type scale: 15px base, ratio 1.2 */
-  --text-xs: 0.8rem;      /* 12 */
+  /* type scale: 15px base */
+  --text-xs: 0.75rem;     /* 12 */
   --text-sm: 0.875rem;    /* 14 */
   --text-base: 0.9375rem; /* 15 */
   --text-lg: 1.125rem;    /* 18 */
   --text-xl: 1.375rem;    /* 22 */
-  --text-2xl: 1.625rem;   /* 26 */
-  --text-3xl: 1.9375rem;  /* 31 */
+  --text-2xl: 1.75rem;    /* 28 */
+  --text-3xl: 2.5rem;     /* 40 */
+  --text-4xl: 3.5rem;     /* 56 */
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -40,10 +42,12 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-faint: var(--faint);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-positive: var(--positive);
   --color-warning: var(--warning);
   --color-border: var(--border);
   --color-input: var(--input);
@@ -51,63 +55,67 @@
 
   --radius-sm: calc(var(--radius) / 2);
   --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) * 2);
+  --radius-lg: calc(var(--radius) * 1.5);
   --radius-xl: calc(var(--radius) * 2);
 
   --spacing: 4px;
-  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 :root {
-  --radius: 6px;
-  --duration-fast: 120ms;
+  --radius: 8px;
+  --duration-fast: 150ms;
   --duration-base: 220ms;
 
-  --background: #0f1312;
-  --foreground: #e6ebe8;
-  --card: #161b19;
-  --card-foreground: #e6ebe8;
-  --popover: #1b2120;
-  --popover-foreground: #e6ebe8;
-  --primary: #5fd4a0;
-  --primary-foreground: #06140e;
-  --secondary: #1f2624;
-  --secondary-foreground: #e6ebe8;
-  --muted: #1b2120;
-  --muted-foreground: #8e9a95;
-  --accent: #1f2624;
-  --accent-foreground: #e6ebe8;
-  --destructive: #f0715f;
-  --destructive-foreground: #1a0805;
-  --warning: #e9b45a;
-  --border: #e6ebe81c;
-  --input: #e6ebe826;
-  --ring: #5fd4a0;
+  --background: #141415;
+  --foreground: #ededed;
+  --card: #19191b;
+  --card-foreground: #ededed;
+  --popover: #19191b;
+  --popover-foreground: #ededed;
+  --primary: #ededed;
+  --primary-foreground: #141415;
+  --secondary: #232325;
+  --secondary-foreground: #ededed;
+  --muted: #232325;
+  --muted-foreground: #a1a1a6;
+  --faint: #85858b;
+  --accent: #232325;
+  --accent-foreground: #ededed;
+  --destructive: #e5484d;
+  --destructive-foreground: #ededed;
+  --positive: #4cc38a;
+  --warning: #e0a84e;
+  --border: #ededed14;
+  --input: #ededed1f;
+  --ring: #ededed;
   color-scheme: dark;
 }
 
 @media (prefers-color-scheme: light) {
   :root {
-    --background: #f4f6f4;
-    --foreground: #18201d;
-    --card: #fbfcfb;
-    --card-foreground: #18201d;
+    --background: #fafafa;
+    --foreground: #171717;
+    --card: #ffffff;
+    --card-foreground: #171717;
     --popover: #ffffff;
-    --popover-foreground: #18201d;
-    --primary: #12855a;
-    --primary-foreground: #f4fbf7;
-    --secondary: #e6ebe8;
-    --secondary-foreground: #18201d;
-    --muted: #e9eeeb;
-    --muted-foreground: #56625d;
-    --accent: #e6ebe8;
-    --accent-foreground: #18201d;
-    --destructive: #c23c2a;
-    --destructive-foreground: #fff6f4;
-    --warning: #9a6413;
-    --border: #18201d1f;
-    --input: #18201d2e;
-    --ring: #12855a;
+    --popover-foreground: #171717;
+    --primary: #171717;
+    --primary-foreground: #fafafa;
+    --secondary: #f4f4f5;
+    --secondary-foreground: #171717;
+    --muted: #f4f4f5;
+    --muted-foreground: #525252;
+    --faint: #737373;
+    --accent: #f4f4f5;
+    --accent-foreground: #171717;
+    --destructive: #dc2626;
+    --destructive-foreground: #ffffff;
+    --positive: #15803d;
+    --warning: #a16207;
+    --border: #17171714;
+    --input: #17171724;
+    --ring: #171717;
     color-scheme: light;
   }
 }

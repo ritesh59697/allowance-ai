@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 import { AgentKeys } from '@/components/AgentKeys'
 import { PendingCard } from '@/components/PendingCard'
 import { Setup } from '@/components/Setup'
-import { SiteHeader } from '@/components/SiteHeader'
+import { PageShell } from '@/components/SiteHeader'
 import { WindowMeter } from '@/components/WindowMeter'
 import { Button } from '@/components/ui/button'
 import { Toaster } from '@/components/ui/sonner'
@@ -80,8 +80,8 @@ export default function App() {
   const ready = passkey && account && snapshot && isOwner
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-8 px-4 pb-16 pt-6">
-      <SiteHeader />
+    <PageShell>
+      <div className="mx-auto flex w-full max-w-xl flex-col gap-10 py-12 md:py-16">
 
       {!ready ? (
         <>
@@ -106,8 +106,9 @@ export default function App() {
           )}
         </>
       ) : (
-        <main className="flex flex-col gap-10">
+        <div className="flex flex-col gap-10">
           <div className="flex flex-col gap-1">
+            <h1 className="text-3xl font-medium leading-[1.1] tracking-[-0.02em]">Your agent's wallet</h1>
             <a
               href={`${config.explorerAccountUrl}${account}`}
               target="_blank"
@@ -130,8 +131,8 @@ export default function App() {
           )}
 
           <section aria-labelledby="pending-heading" className="flex flex-col gap-3">
-            <div className="flex items-baseline justify-between">
-              <h2 id="pending-heading" className="text-xs uppercase tracking-wider text-muted-foreground">
+            <div className="flex items-center justify-between">
+              <h2 id="pending-heading" className="font-medium">
                 Waiting for you
               </h2>
               <div className="flex items-center gap-1">
@@ -155,7 +156,7 @@ export default function App() {
               </div>
             </div>
             {snapshot.pending.length === 0 ? (
-              <p className="rounded-md border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
+              <p className="rounded-xl border px-5 py-8 text-muted-foreground">
                 Nothing held. Your agent is inside its limits.
               </p>
             ) : (
@@ -186,10 +187,11 @@ export default function App() {
               act({ action: 'revoke_agent_key', public_key: publicKey }, publicKey, 'Agent key revoked')
             }
           />
-        </main>
+        </div>
       )}
+      </div>
       <Toaster position="top-center" />
-    </div>
+    </PageShell>
   )
 }
 
@@ -202,11 +204,11 @@ function StatsRow({ stats }: { stats: Stats }) {
   ] as const
   return (
     <section aria-label="Agent activity">
-      <dl className="grid grid-cols-4 divide-x rounded-md border">
+      <dl className="grid grid-cols-4 divide-x rounded-xl border bg-card">
         {items.map(([label, value]) => (
-          <div key={label} className="flex flex-col gap-1 px-3 py-2">
-            <dt className="text-xs text-muted-foreground">{label}</dt>
-            <dd className="font-mono text-lg">{value}</dd>
+          <div key={label} className="flex flex-col gap-1 px-4 py-3">
+            <dt className="text-sm text-muted-foreground">{label}</dt>
+            <dd className="font-mono text-xl">{value}</dd>
           </div>
         ))}
       </dl>
