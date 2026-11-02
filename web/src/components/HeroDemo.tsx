@@ -1,6 +1,6 @@
-import { useSyncExternalStore } from 'react'
 import { LogoMark } from '@/components/Logo'
 import { Stamp } from '@/components/Stamp'
+import { useTheme } from '@/lib/theme'
 import { Avatar, Bar, Collapse, LockScreen, Notification, Phone, Row, Stage, Window, type Act } from '@/vendor/stageshow/kit'
 import './hero-demo.css'
 
@@ -64,21 +64,14 @@ const script = async (a: Act<S>) => {
   await a.snap({ check: 0, held: false })
 }
 
-const dark = () => window.matchMedia('(prefers-color-scheme: dark)')
-const subscribe = (fn: () => void) => {
-  const q = dark()
-  q.addEventListener('change', fn)
-  return () => q.removeEventListener('change', fn)
-}
-
 export function HeroDemo() {
-  const isDark = useSyncExternalStore(subscribe, () => dark().matches, () => true)
+  const theme = useTheme()
   return (
     <Stage<S>
       width={620}
       height={440}
       compact={{ below: 560, width: 358, height: 600 }}
-      theme={isDark ? 'dark' : 'light'}
+      theme={theme}
       initial={START}
       poster={POSTER}
       script={script}

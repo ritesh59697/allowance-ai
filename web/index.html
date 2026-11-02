@@ -9,6 +9,19 @@
       content="An AI agent's NEAR wallet with the spending rules enforced on-chain. Payments outside your limits wait for your Face ID."
     />
     <meta name="theme-color" content="#141415" />
+    <script>
+      // Set the theme before first paint so the page never flashes the wrong
+      // colors. Same rule as src/lib/theme.ts: a saved "light" or "dark"
+      // wins, otherwise follow the system.
+      ;(function () {
+        var pref = null
+        try {
+          pref = JSON.parse(localStorage.getItem('theme'))
+        } catch (e) {}
+        var light = pref === 'light' || (pref !== 'dark' && matchMedia('(prefers-color-scheme: light)').matches)
+        document.documentElement.dataset.theme = light ? 'light' : 'dark'
+      })()
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 

@@ -8,6 +8,9 @@
 @import "@fontsource/ibm-plex-mono/500.css";
 @import "@fontsource/ibm-plex-mono/600.css";
 
+/* Tailwind's dark: variant follows the site theme, not the system */
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
 /*
  * Allowance tokens. Direction: exact, calm, trustworthy; a statement, not a
  * terminal. Graphite neutrals, IBM Plex Sans throughout, Plex Mono only for
@@ -92,32 +95,33 @@
   color-scheme: dark;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    --background: #fafafa;
-    --foreground: #171717;
-    --card: #ffffff;
-    --card-foreground: #171717;
-    --popover: #ffffff;
-    --popover-foreground: #171717;
-    --primary: #171717;
-    --primary-foreground: #fafafa;
-    --secondary: #f4f4f5;
-    --secondary-foreground: #171717;
-    --muted: #f4f4f5;
-    --muted-foreground: #525252;
-    --faint: #737373;
-    --accent: #f4f4f5;
-    --accent-foreground: #171717;
-    --destructive: #dc2626;
-    --destructive-foreground: #ffffff;
-    --positive: #15803d;
-    --warning: #a16207;
-    --border: #17171714;
-    --input: #17171724;
-    --ring: #171717;
-    color-scheme: light;
-  }
+/* The theme is an attribute, set before first paint by the script in
+   index.html and changed by the header's theme button (lib/theme.ts). Dark
+   is the base; light overrides it. */
+:root[data-theme='light'] {
+  --background: #fafafa;
+  --foreground: #171717;
+  --card: #ffffff;
+  --card-foreground: #171717;
+  --popover: #ffffff;
+  --popover-foreground: #171717;
+  --primary: #171717;
+  --primary-foreground: #fafafa;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #171717;
+  --muted: #f4f4f5;
+  --muted-foreground: #525252;
+  --faint: #737373;
+  --accent: #f4f4f5;
+  --accent-foreground: #171717;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --positive: #15803d;
+  --warning: #a16207;
+  --border: #17171714;
+  --input: #17171724;
+  --ring: #171717;
+  color-scheme: light;
 }
 
 @layer base {

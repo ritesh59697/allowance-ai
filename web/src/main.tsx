@@ -6,6 +6,9 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import Arena from './Arena.tsx'
 import Landing from './Landing.tsx'
+import { initTheme } from './lib/theme'
+
+initTheme()
 
 const PAGES: Record<string, () => React.JSX.Element> = { '/arena': Arena, '/owner': App }
 const Page = PAGES[window.location.pathname.replace(/\/$/, '')] ?? Landing

@@ -1,4 +1,5 @@
 import { LogoMark } from '@/components/Logo'
+import { ThemeButton } from '@/components/ThemeButton'
 import { config } from '@/lib/near'
 import { cn } from '@/lib/utils'
 
@@ -42,6 +43,7 @@ function SiteHeader() {
               {label}
             </a>
           ))}
+          <ThemeButton />
         </nav>
       </div>
     </header>
