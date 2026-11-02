@@ -11,7 +11,7 @@ import { loadOrCreateDevPasskey } from "./lib/dev-passkey.mjs";
 
 const OWNER_METHODS = ["approve", "reject", "reject_all", "set_policy", "withdraw", "add_agent_key", "revoke_agent_key"];
 
-const wasmPath = new URL("../contract/target/near/haptix_leash.wasm", import.meta.url);
+const wasmPath = new URL("../contract/target/near/allowance.wasm", import.meta.url);
 const passkeyPublicKey = process.env.OWNER_PASSKEY_PUBLIC_KEY || loadOrCreateDevPasskey().publicKeyB64;
 const relayPublicKey = process.env.OWNER_RELAY_PUBLIC_KEY;
 const owner = ownerAccount();

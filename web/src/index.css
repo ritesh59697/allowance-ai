@@ -9,7 +9,7 @@
 @import "@fontsource/ibm-plex-mono/600.css";
 
 /*
- * Haptix Leash tokens. Dials: variance 4 / motion 4 / density 4.
+ * Allowance tokens. Dials: variance 4 / motion 4 / density 4.
  * Stance: precise. Dark-first (phone at night), light via prefers-color-scheme.
  * One accent (mint) = approve / primary action. Coral = reject / destructive.
  */

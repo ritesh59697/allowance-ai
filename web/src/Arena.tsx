@@ -52,7 +52,7 @@ export default function Arena() {
       <header className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <ShieldCheck className="size-5 text-primary" aria-hidden />
-          <span className="font-heading font-medium">Haptix Leash</span>
+          <span className="font-heading font-medium">Allowance</span>
         </div>
         <Badge variant="outline" className="font-mono uppercase">
           {config.network}

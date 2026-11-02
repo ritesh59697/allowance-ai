@@ -1,4 +1,4 @@
-//! Haptix Leash: an on-chain spending policy for an AI agent.
+//! Allowance: an on-chain spending policy for an AI agent.
 //!
 //! The contract lives on the agent's own account. The agent holds only a
 //! function-call key scoped to `agent_spend` on this account, so it cannot
@@ -25,10 +25,10 @@ use near_sdk::{
     PublicKey,
 };
 
-const EVENT_STANDARD: &str = "haptix_leash";
+const EVENT_STANDARD: &str = "allowance";
 const EVENT_VERSION: &str = "1.0.0";
 /// Domain separator for passkey challenges. Bumped if the message format changes.
-const CHALLENGE_DOMAIN: &str = "haptix-leash:v1";
+const CHALLENGE_DOMAIN: &str = "allowance:v1";
 /// WebAuthn authenticator data flags.
 const FLAG_USER_PRESENT: u8 = 0x01;
 const FLAG_USER_VERIFIED: u8 = 0x04;
@@ -537,7 +537,7 @@ impl Leash {
 
     /// The exact challenge (base64url, unpadded) the passkey must sign for
     /// `action` at the current nonce. Clients may also compute it themselves:
-    /// sha256("haptix-leash:v1:{account}:{nonce}:{action}").
+    /// sha256("allowance:v1:{account}:{nonce}:{action}").
     pub fn get_challenge(&self, action: OwnerAction) -> String {
         URL_SAFE_NO_PAD.encode(self.challenge(&action))
     }

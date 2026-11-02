@@ -1,10 +1,10 @@
 [package]
-name = "haptix-leash"
+name = "allowance"
 description = "On-chain spending policy for AI agents: function-call key spends under limits, passkey approves the rest"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
-repository = "https://github.com/ritesh59697/haptix-leash"
+repository = "https://github.com/ritesh59697/allowance-ai"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

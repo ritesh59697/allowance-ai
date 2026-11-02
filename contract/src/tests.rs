@@ -336,7 +336,7 @@ fn passkey_manages_agent_keys() {
 #[test]
 fn challenge_matches_documented_format() {
     let c = setup();
-    let expected = env::sha256_array(b"haptix-leash:v1:agent.testnet:0:approve:7");
+    let expected = env::sha256_array(b"allowance:v1:agent.testnet:0:approve:7");
     assert_eq!(
         c.get_challenge(OwnerAction::Approve { id: U64(7) }),
         URL_SAFE_NO_PAD.encode(expected)

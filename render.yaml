@@ -3,19 +3,16 @@
 # they never live in this repository.
 services:
   - type: web
-    name: haptix-leash-arena
+    name: allowance-arena
     runtime: node
     rootDir: agent
-    # Starter: no spin-down (the arena must answer during judging) and a disk
-    # so the attempt feed survives restarts.
-    plan: starter
+    # Free plan: sleeps after idle time (first request then takes ~1 min) and
+    # has no persistent disk, so the attempt feed resets on each restart.
+    # On-chain stats are unaffected. Switch to a paid plan + disk for durability.
+    plan: free
     buildCommand: npm ci
     startCommand: npm start
     healthCheckPath: /api/health
-    disk:
-      name: arena-data
-      mountPath: /var/data
-      sizeGB: 1
     envVars:
       - key: NODE_VERSION
         value: "24"
@@ -69,7 +66,7 @@ services:
       - key: ARENA_CHAIN_REFRESH_MS
         value: "10000"
       - key: ARENA_DATA_FILE
-        value: /var/data/attempts.jsonl
+        value: data/attempts.jsonl
       - key: ARENA_MODEL_GUARDED
         value: Qwen/Qwen3.8-27B
       - key: ARENA_MODEL_JAILBROKEN

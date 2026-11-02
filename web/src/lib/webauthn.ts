@@ -45,7 +45,7 @@ export async function registerPasskey(rpId: string, label: string): Promise<Regi
   const credential = (await navigator.credentials.create({
     publicKey: {
       challenge: crypto.getRandomValues(new Uint8Array(32)),
-      rp: { id: rpId, name: 'Haptix Leash' },
+      rp: { id: rpId, name: 'Allowance' },
       user: { id: crypto.getRandomValues(new Uint8Array(16)), name: label, displayName: label },
       pubKeyCredParams: [{ type: 'public-key', alg: -7 }], // ES256 = P-256
       authenticatorSelection: { residentKey: 'preferred', userVerification: 'required' },

@@ -18,7 +18,7 @@ export function Setup({ passkey, relayPublicKey, account, onAccountChange, onReg
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-2">
-        <h1 className="font-heading text-xl font-medium">Put your agent on a leash</h1>
+        <h1 className="font-heading text-xl font-medium">Give your agent an allowance</h1>
         <p className="text-muted-foreground">
           Your agent spends small amounts on its own. Anything bigger waits here until you approve it with Face ID or
           your fingerprint. The rules live in a NEAR contract, not on a server.
