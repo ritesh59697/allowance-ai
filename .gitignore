@@ -8,3 +8,4 @@ node_modules/
 !.env.example
 .web-account
 .real-account
+!agent/attacks/logs/*.log
