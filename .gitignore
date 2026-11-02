@@ -10,3 +10,5 @@ node_modules/
 .real-account
 !agent/attacks/logs/*.log
 .arena-account
+HACKATHON.md
+notes/
