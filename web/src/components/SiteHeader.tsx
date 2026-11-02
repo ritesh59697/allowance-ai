@@ -1,4 +1,4 @@
-import { ShieldCheck } from 'lucide-react'
+import { LogoMark } from '@/components/Logo'
 import { config } from '@/lib/near'
 import { cn } from '@/lib/utils'
 
@@ -28,7 +28,7 @@ function SiteHeader() {
     <header className="border-b">
       <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         <a href="/" className={cn(linkClass, 'flex items-center gap-2 font-medium text-foreground')}>
-          <ShieldCheck className="size-[18px]" strokeWidth={1.5} aria-hidden />
+          <LogoMark className="size-[18px]" />
           <span className="text-base">Allowance</span>
         </a>
         <nav aria-label="Site" className="flex items-center gap-5">
