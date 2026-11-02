@@ -2,8 +2,14 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import Arena from './Arena.tsx'
+import Landing from './Landing.tsx'
 import './index.css'
 
-const isArena = window.location.pathname.replace(/\/$/, '') === '/arena'
+const PAGES: Record<string, () => React.JSX.Element> = { '/arena': Arena, '/owner': App }
+const Page = PAGES[window.location.pathname.replace(/\/$/, '')] ?? Landing
 
-createRoot(document.getElementById('root')!).render(<StrictMode>{isArena ? <Arena /> : <App />}</StrictMode>)
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <Page />
+  </StrictMode>,
+)

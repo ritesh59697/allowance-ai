@@ -20,6 +20,8 @@ export const config = {
   explorerTxUrl: env('VITE_NEAR_EXPLORER_TX_URL'),
   explorerAccountUrl: env('VITE_NEAR_EXPLORER_ACCOUNT_URL'),
   defaultLeashAccount: (import.meta.env.VITE_LEASH_ACCOUNT as string | undefined) ?? '',
+  /** Public source repository; links to it are hidden when unset. */
+  repoUrl: ((import.meta.env.VITE_REPO_URL as string | undefined) ?? '').replace(/\/$/, ''),
   rpId: (import.meta.env.VITE_PASSKEY_RP_ID as string | undefined) || window.location.hostname,
   pollMs: Number(env('VITE_POLL_MS')),
   callGas: BigInt(env('VITE_GAS_CALL_TGAS')) * 10n ** 12n,

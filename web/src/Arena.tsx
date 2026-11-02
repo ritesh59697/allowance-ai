@@ -1,10 +1,11 @@
-import { ExternalLink, KeyRound, ListChecks, Mail, Gauge, ShieldCheck } from 'lucide-react'
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { ExternalLink, KeyRound, ListChecks, Mail, Gauge } from 'lucide-react'
+import { useState, type FormEvent } from 'react'
+import { SiteHeader } from '@/components/SiteHeader'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Toaster } from '@/components/ui/sonner'
+import { useArenaSummary } from '@/hooks/useArenaSummary'
 import {
-  getSummary,
   sendAttempt,
   type ArenaChain,
   type ArenaEvent,
@@ -25,39 +26,13 @@ const MODES: { id: Mode; title: string; body: string }[] = [
   },
 ]
 
-const POLL_MS = Number(import.meta.env.VITE_ARENA_POLL_MS ?? config.pollMs)
-
 export default function Arena() {
-  const [summary, setSummary] = useState<ArenaSummary | null>(null)
-  const [loadError, setLoadError] = useState<string | null>(null)
+  const { summary, error: loadError, refresh } = useArenaSummary()
   const chain = summary?.chain ?? null
-
-  const refresh = useCallback(async () => {
-    try {
-      setSummary(await getSummary())
-      setLoadError(null)
-    } catch (e) {
-      setLoadError(e instanceof Error ? e.message : String(e))
-    }
-  }, [])
-
-  useEffect(() => {
-    refresh()
-    const timer = setInterval(refresh, POLL_MS)
-    return () => clearInterval(timer)
-  }, [refresh])
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-12 px-4 pb-20 pt-6">
-      <header className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="size-5 text-primary" aria-hidden />
-          <span className="font-heading font-medium">Allowance</span>
-        </div>
-        <Badge variant="outline" className="font-mono uppercase">
-          {config.network}
-        </Badge>
-      </header>
+      <SiteHeader />
 
       <section className="grid gap-8 md:grid-cols-[1.4fr_1fr] md:items-end">
         <div className="flex flex-col gap-3">
@@ -86,12 +61,14 @@ export default function Arena() {
   )
 }
 
+// Counts come from the contract, so they match the explorer and survive
+// arena server restarts. Only "paid to strangers" is the server's tally.
 function Scoreboard({ summary, chain }: { summary: ArenaSummary | null; chain: ArenaChain | null }) {
   return (
     <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border bg-border">
       <Stat label="In the wallet" value={chain ? `${near(chain.balance)} NEAR` : '…'} />
-      <Stat label="Attempts" value={summary?.attempts ?? '…'} />
-      <Stat label="AI fooled" value={summary?.fooled ?? '…'} hint="tried to pay a stranger" />
+      <Stat label="Payment requests" value={chain?.stats.attempts ?? '…'} hint="counted on-chain" />
+      <Stat label="Held" value={chain?.stats.held ?? '…'} hint="sent to the owner's Face ID" />
       <Stat
         label="Paid to strangers"
         value={summary ? `${summary.strangerPaymentsSent}` : '…'}

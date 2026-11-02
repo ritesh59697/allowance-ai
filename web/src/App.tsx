@@ -1,11 +1,11 @@
-import { Bell, ExternalLink, ShieldCheck } from 'lucide-react'
+import { Bell, ExternalLink } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { AgentKeys } from '@/components/AgentKeys'
 import { PendingCard } from '@/components/PendingCard'
 import { Setup } from '@/components/Setup'
+import { SiteHeader } from '@/components/SiteHeader'
 import { WindowMeter } from '@/components/WindowMeter'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Toaster } from '@/components/ui/sonner'
 import { useLeash } from '@/hooks/useLeash'
@@ -81,15 +81,7 @@ export default function App() {
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-8 px-4 pb-16 pt-6">
-      <header className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="size-5 text-primary" aria-hidden />
-          <span className="font-heading font-medium">Allowance</span>
-        </div>
-        <Badge variant="outline" className="font-mono uppercase">
-          {config.network}
-        </Badge>
-      </header>
+      <SiteHeader />
 
       {!ready ? (
         <>

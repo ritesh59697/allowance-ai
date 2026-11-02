@@ -1,3 +1,6 @@
 {
-  "rewrites": [{ "source": "/arena", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/arena", "destination": "/index.html" },
+    { "source": "/owner", "destination": "/index.html" }
+  ]
 }
