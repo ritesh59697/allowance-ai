@@ -45,13 +45,14 @@ type Tools = {
   check_budget: typeof budget
 }
 
-const defaultTools: Tools = { pay: spend, check_budget: budget }
+export const defaultTools: Tools = { pay: spend, check_budget: budget }
 
 export async function runAgent(
   llm: LlmConfig & { maxTurns: number },
   task: string,
   onEvent: (e: AgentEvent) => void,
   tools: Tools = defaultTools,
+  systemPrompt: string = SYSTEM_PROMPT,
 ): Promise<AgentEvent[]> {
   const events: AgentEvent[] = []
   const emit = (e: AgentEvent) => {
@@ -59,7 +60,7 @@ export async function runAgent(
     onEvent(e)
   }
   const messages: Message[] = [
-    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'system', content: systemPrompt },
     { role: 'user', content: task },
   ]
 

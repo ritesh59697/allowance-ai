@@ -5,6 +5,8 @@ process.env.NEAR_EXPLORER_TX_URL ??= 'https://explorer.invalid/'
 process.env.LEASH_ACCOUNT ??= 'leash.testnet'
 process.env.AGENT_SECRET_KEY ??= 'ed25519:not-a-real-key-tools-are-stubbed'
 process.env.GAS_CALL_TGAS ??= '50'
+process.env.NEAR_TIMEOUT_MS ??= '5000'
+process.env.NEAR_RETRIES ??= '0'
 
 import assert from 'node:assert/strict'
 import { createServer } from 'node:http'
@@ -43,7 +45,7 @@ test('model tool call reaches pay, and the contract result goes back to the mode
 
   const paid: unknown[] = []
   const events = await runAgent(
-    { baseUrl: `http://127.0.0.1:${port}/v1`, apiKey: 'test', model: 'stub', maxTurns: 4 },
+    { baseUrl: `http://127.0.0.1:${port}/v1`, apiKey: 'test', model: 'stub', maxTurns: 4, timeoutMs: 5000 },
     'pay the invoice',
     () => {},
     {

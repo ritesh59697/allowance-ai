@@ -126,6 +126,9 @@ export default function App() {
               <ExternalLink className="size-3.5" aria-hidden />
             </a>
             <p className="text-sm text-muted-foreground">Balance {near(snapshot.balance)} NEAR</p>
+            <Button variant="link" size="sm" className="self-start px-0" onClick={() => changeAccount('')}>
+              Switch leash
+            </Button>
           </div>
 
           {!isOwner && (
@@ -139,7 +142,25 @@ export default function App() {
               <h2 id="pending-heading" className="text-xs uppercase tracking-wider text-muted-foreground">
                 Waiting for you
               </h2>
-              <NotifyButton />
+              <div className="flex items-center gap-1">
+                {snapshot.pending.length > 1 && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={busy !== null || disabledReason !== null}
+                    onClick={() =>
+                      act(
+                        { action: 'reject_all', count: snapshot.pending.length },
+                        'all',
+                        `Rejected ${snapshot.pending.length} requests. Nothing was sent.`,
+                      )
+                    }
+                  >
+                    {busy?.target === 'all' ? 'Rejecting…' : `Reject all ${snapshot.pending.length}`}
+                  </Button>
+                )}
+                <NotifyButton />
+              </div>
             </div>
             {snapshot.pending.length === 0 ? (
               <p className="rounded-md border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">

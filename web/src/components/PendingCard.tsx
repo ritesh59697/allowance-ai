@@ -5,6 +5,7 @@ import { near, relativeTime } from '@/lib/format'
 import type { PendingSpend } from '@/lib/near'
 
 const REASON_LABEL: Record<PendingSpend['reason'], string> = {
+  UnknownReceiver: 'Not an approved payee',
   OverPerTxLimit: 'Over per-payment limit',
   OverWindowLimit: 'Over window limit',
 }

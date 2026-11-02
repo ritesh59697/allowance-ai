@@ -25,7 +25,7 @@ export const config = {
   callGas: BigInt(env('VITE_GAS_CALL_TGAS')) * 10n ** 12n,
 }
 
-export const OWNER_METHODS = ['approve', 'reject', 'set_policy', 'withdraw', 'add_agent_key', 'revoke_agent_key']
+export const OWNER_METHODS = ['approve', 'reject', 'reject_all', 'set_policy', 'withdraw', 'add_agent_key', 'revoke_agent_key']
 
 const provider = new JsonRpcProvider({ url: config.rpcUrl })
 
@@ -37,6 +37,7 @@ export type Policy = {
   window_secs: number
   max_pending: number
   max_memo_bytes: number
+  allowed_receivers?: string[] // absent on leashes deployed before the allowlist
 }
 export type WindowView = { started_at_ms: string; resets_at_ms: string; spent: string; remaining: string }
 export type PendingSpend = {
@@ -44,7 +45,7 @@ export type PendingSpend = {
   receiver_id: string
   amount: string
   memo: string
-  reason: 'OverPerTxLimit' | 'OverWindowLimit'
+  reason: 'UnknownReceiver' | 'OverPerTxLimit' | 'OverWindowLimit'
   created_at_ms: string
 }
 export type Stats = {
@@ -63,6 +64,7 @@ export type AgentKey = { publicKey: string; allowance: string | null }
 export type OwnerAction =
   | { action: 'approve'; id: string }
   | { action: 'reject'; id: string }
+  | { action: 'reject_all'; count: number }
   | { action: 'revoke_agent_key'; public_key: string }
 
 export type LeashSnapshot = {

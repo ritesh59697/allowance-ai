@@ -11,7 +11,8 @@
     "attack:drain": "node --env-file=.env attacks/02-drip-drain.ts",
     "attack:key": "node --env-file=.env attacks/03-key-misuse.ts",
     "test": "node --test src/*.test.ts",
-    "typecheck": "tsc -p ."
+    "typecheck": "tsc -p .",
+    "arena": "node --env-file=.env --env-file=.env.arena src/server.ts"
   },
   "dependencies": {
     "near-api-js": "7.4.0"

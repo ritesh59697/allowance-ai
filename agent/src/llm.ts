@@ -12,13 +12,28 @@ export type ToolSpec = {
   function: { name: string; description: string; parameters: Record<string, unknown> }
 }
 
-export type LlmConfig = { baseUrl: string; apiKey: string; model: string }
+export type LlmConfig = {
+  baseUrl: string
+  apiKey: string
+  model: string
+  timeoutMs: number
+  maxTokens?: number
+  reasoningEffort?: string
+}
 
 export async function complete(llm: LlmConfig, messages: Message[], tools: ToolSpec[]) {
   const res = await fetch(`${llm.baseUrl.replace(/\/$/, '')}/chat/completions`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${llm.apiKey}` },
-    body: JSON.stringify({ model: llm.model, messages, tools, tool_choice: 'auto' }),
+    body: JSON.stringify({
+      model: llm.model,
+      messages,
+      tools,
+      tool_choice: 'auto',
+      ...(llm.maxTokens ? { max_tokens: llm.maxTokens } : {}),
+      ...(llm.reasoningEffort ? { reasoning_effort: llm.reasoningEffort } : {}),
+    }),
+    signal: AbortSignal.timeout(llm.timeoutMs),
   })
   if (!res.ok) throw new Error(`LLM returned HTTP ${res.status}: ${(await res.text()).slice(0, 300)}`)
   const body = await res.json()

@@ -5,8 +5,9 @@
 //! transfer NEAR, call other contracts or touch keys directly. Every spend goes
 //! through the policy below:
 //!
-//! - under the per-transaction cap and the rolling window cap: sent at once
-//! - over either cap: held as a pending request
+//! - to an allowed receiver, under the per-transaction cap and the rolling
+//!   window cap: sent at once
+//! - to anyone else, or over either cap: held as a pending request
 //! - pending requests are approved or rejected by the owner's passkey
 //!   (WebAuthn P-256, verified on-chain with `env::p256_verify`)
 //!
@@ -58,6 +59,9 @@ pub struct Policy {
     pub max_pending: u32,
     /// Cap on memo size, for the same reason.
     pub max_memo_bytes: u32,
+    /// Receivers the agent may pay without approval. Empty = any receiver.
+    /// Payments to anyone else are always held, whatever the amount.
+    pub allowed_receivers: Vec<AccountId>,
 }
 
 impl Policy {
@@ -69,6 +73,17 @@ impl Policy {
         );
         require!(self.window_secs > 0, "window_secs must be > 0");
         require!(self.max_pending > 0, "max_pending must be > 0");
+        let mut sorted = self.allowed_receivers.clone();
+        sorted.sort();
+        sorted.dedup();
+        require!(
+            sorted.len() == self.allowed_receivers.len(),
+            "allowed_receivers has duplicates"
+        );
+    }
+
+    fn allows(&self, receiver: &AccountId) -> bool {
+        self.allowed_receivers.is_empty() || self.allowed_receivers.contains(receiver)
     }
 }
 
@@ -119,6 +134,7 @@ struct ClientData {
 #[near(serializers = [borsh, json])]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum HoldReason {
+    UnknownReceiver,
     OverPerTxLimit,
     OverWindowLimit,
 }
@@ -159,6 +175,7 @@ pub struct PendingSpend {
 pub enum OwnerAction {
     Approve { id: U64 },
     Reject { id: U64 },
+    RejectAll { count: u32 },
     SetPolicy { policy: Policy },
     Withdraw { receiver_id: AccountId, amount: NearToken },
     AddAgentKey { public_key: PublicKey, allowance: NearToken },
@@ -170,13 +187,20 @@ impl OwnerAction {
         match self {
             OwnerAction::Approve { id } => format!("approve:{}", id.0),
             OwnerAction::Reject { id } => format!("reject:{}", id.0),
+            OwnerAction::RejectAll { count } => format!("reject_all:{}", count),
             OwnerAction::SetPolicy { policy } => format!(
-                "set_policy:{}:{}:{}:{}:{}",
+                "set_policy:{}:{}:{}:{}:{}:{}",
                 policy.per_tx_max.as_yoctonear(),
                 policy.window_max.as_yoctonear(),
                 policy.window_secs,
                 policy.max_pending,
-                policy.max_memo_bytes
+                policy.max_memo_bytes,
+                policy
+                    .allowed_receivers
+                    .iter()
+                    .map(|a| a.as_str())
+                    .collect::<Vec<_>>()
+                    .join(",")
             ),
             OwnerAction::Withdraw {
                 receiver_id,
@@ -292,13 +316,14 @@ impl Leash {
         }
 
         self.roll_window();
+        let known_receiver = self.policy.allows(&receiver_id);
         let within_tx = amount <= self.policy.per_tx_max;
         let within_window = self
             .window_spent
             .checked_add(amount)
             .is_some_and(|total| total <= self.policy.window_max);
 
-        if within_tx && within_window {
+        if known_receiver && within_tx && within_window {
             self.window_spent = self.window_spent.saturating_add(amount);
             self.stats.sent += 1;
             self.stats.sent_total = self.stats.sent_total.saturating_add(amount);
@@ -315,7 +340,9 @@ impl Leash {
             return self.refuse(&receiver_id, amount, RefuseReason::PendingQueueFull);
         }
 
-        let reason = if within_tx {
+        let reason = if !known_receiver {
+            HoldReason::UnknownReceiver
+        } else if within_tx {
             HoldReason::OverWindowLimit
         } else {
             HoldReason::OverPerTxLimit
@@ -364,6 +391,20 @@ impl Leash {
             .unwrap_or_else(|| env::panic_str("no such pending request"));
         self.stats.rejected += 1;
         emit("spend_rejected", json!(&request));
+    }
+
+    /// Reject every held request in one approval. `count` must match the
+    /// current queue length, so the owner signs for exactly what they saw.
+    pub fn reject_all(&mut self, count: u32, assertion: WebAuthnAssertion) {
+        require!(count == self.pending.len(), "pending count changed; refresh and sign again");
+        self.verify_owner(&OwnerAction::RejectAll { count }, &assertion);
+        let ids: Vec<u64> = self.pending.keys().copied().collect();
+        for id in ids {
+            if let Some(request) = self.pending.remove(&id) {
+                emit("spend_rejected", json!(&request));
+            }
+        }
+        self.stats.rejected += u64::from(count);
     }
 
     pub fn set_policy(&mut self, policy: Policy, assertion: WebAuthnAssertion) {

@@ -9,3 +9,4 @@ node_modules/
 .web-account
 .real-account
 !agent/attacks/logs/*.log
+.arena-account

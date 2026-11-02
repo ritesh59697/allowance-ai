@@ -27,6 +27,10 @@ export const config = {
     window_secs: Number(required("POLICY_WINDOW_SECS")),
     max_pending: Number(required("POLICY_MAX_PENDING")),
     max_memo_bytes: Number(required("POLICY_MAX_MEMO_BYTES")),
+    allowed_receivers: (process.env.POLICY_ALLOWED_RECEIVERS || "")
+      .split(",")
+      .map((a) => a.trim())
+      .filter(Boolean),
   },
   agentKeyAllowance: nearToYocto(required("AGENT_KEY_ALLOWANCE_NEAR")).toString(),
   gas: {

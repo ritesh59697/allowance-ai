@@ -9,7 +9,7 @@ import { actions, nearToYocto, PublicKey } from "near-api-js";
 import { config, ownerAccount, txLink, view } from "./lib/config.mjs";
 import { loadOrCreateDevPasskey } from "./lib/dev-passkey.mjs";
 
-const OWNER_METHODS = ["approve", "reject", "set_policy", "withdraw", "add_agent_key", "revoke_agent_key"];
+const OWNER_METHODS = ["approve", "reject", "reject_all", "set_policy", "withdraw", "add_agent_key", "revoke_agent_key"];
 
 const wasmPath = new URL("../contract/target/near/haptix_leash.wasm", import.meta.url);
 const passkeyPublicKey = process.env.OWNER_PASSKEY_PUBLIC_KEY || loadOrCreateDevPasskey().publicKeyB64;

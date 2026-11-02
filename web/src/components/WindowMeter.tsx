@@ -23,6 +23,12 @@ export function WindowMeter({ window, policy }: { window: WindowView; policy: Po
           <dt className="text-muted-foreground">Window resets</dt>
           <dd className="font-mono">{relativeTime(Number(window.resets_at_ms))}</dd>
         </div>
+        <div className="col-span-2">
+          <dt className="text-muted-foreground">Approved payees</dt>
+          <dd className="break-all font-mono">
+            {policy.allowed_receivers?.length ? policy.allowed_receivers.join(', ') : 'any account'}
+          </dd>
+        </div>
       </dl>
     </section>
   )

@@ -31,6 +31,7 @@ fn policy() -> Policy {
         window_secs: 24 * 60 * 60,
         max_pending: 3,
         max_memo_bytes: 64,
+        allowed_receivers: vec![],
     }
 }
 
@@ -385,4 +386,82 @@ fn overview_matches_individual_views() {
     assert_eq!(o.pending, c.get_pending(None, None));
     assert_eq!(o.window.spent, c.get_window().spent);
     assert_eq!(o.nonce, c.get_nonce());
+}
+
+// ------------------------------------------------------------------ allowlist
+
+fn allowlisted() -> Leash {
+    let mut c = setup();
+    let p = Policy { allowed_receivers: vec![shop()], ..policy() };
+    let a = sign(&c, OwnerAction::SetPolicy { policy: p.clone() });
+    c.set_policy(p, a);
+    c
+}
+
+#[test]
+fn small_spend_to_stranger_is_held_when_allowlisted() {
+    let mut c = allowlisted();
+    assert_eq!(
+        c.agent_spend(attacker(), NearToken::from_millinear(10), None),
+        SpendOutcome::Held { id: U64(0), reason: HoldReason::UnknownReceiver }
+    );
+    assert_eq!(c.get_window().spent, near(0));
+}
+
+#[test]
+fn small_spend_to_vendor_is_sent_when_allowlisted() {
+    let mut c = allowlisted();
+    assert_eq!(c.agent_spend(shop(), near(2), None), SpendOutcome::Sent);
+}
+
+#[test]
+fn vendor_overspend_still_held_when_allowlisted() {
+    let mut c = allowlisted();
+    assert_eq!(
+        c.agent_spend(shop(), near(6), None),
+        SpendOutcome::Held { id: U64(0), reason: HoldReason::OverPerTxLimit }
+    );
+}
+
+#[test]
+#[should_panic(expected = "challenge mismatch")]
+fn signed_allowlist_cannot_be_extended() {
+    let mut c = setup();
+    let signed_for = Policy { allowed_receivers: vec![shop()], ..policy() };
+    let a = sign(&c, OwnerAction::SetPolicy { policy: signed_for });
+    c.set_policy(Policy { allowed_receivers: vec![shop(), attacker()], ..policy() }, a);
+}
+
+#[test]
+#[should_panic(expected = "allowed_receivers has duplicates")]
+fn duplicate_allowlist_entries_rejected() {
+    let mut c = setup();
+    let p = Policy { allowed_receivers: vec![shop(), shop()], ..policy() };
+    let a = sign(&c, OwnerAction::SetPolicy { policy: p.clone() });
+    c.set_policy(p, a);
+}
+
+// ------------------------------------------------------------------ reject all
+
+#[test]
+fn reject_all_clears_queue_in_one_approval() {
+    let mut c = setup();
+    for _ in 0..3 {
+        c.agent_spend(attacker(), near(50), None);
+    }
+    let a = sign(&c, OwnerAction::RejectAll { count: 3 });
+    c.reject_all(3, a);
+    assert!(c.get_pending(None, None).is_empty());
+    assert_eq!(c.get_stats().rejected, 3);
+    assert_eq!(c.get_nonce(), U64(1));
+}
+
+#[test]
+#[should_panic(expected = "pending count changed")]
+fn reject_all_requires_current_count() {
+    let mut c = setup();
+    c.agent_spend(attacker(), near(50), None);
+    let a = sign(&c, OwnerAction::RejectAll { count: 1 });
+    c.agent_spend(attacker(), near(50), None);
+    c.reject_all(1, a);
 }
