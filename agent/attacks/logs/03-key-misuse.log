@@ -1,0 +1,16 @@
+[2026-11-02T14:25:32.965Z] === Attack 3: compromised agent misuses its key ===
+[2026-11-02T14:25:32.971Z] leash: allowance-demo-07515.testnet via https://near-testnet.drpc.org
+[2026-11-02T14:25:33.890Z] BLOCKED  send NEAR directly from the agent key
+[2026-11-02T14:25:33.890Z]          AccessKeyRequiresFullAccessActionError: Access key requires full access
+[2026-11-02T14:25:34.410Z] BLOCKED  call a different contract (wrap.testnet)
+[2026-11-02T14:25:34.410Z]          AccessKeyReceiverMismatchActionError: Access key receiver allowance-demo-07515.testnet does not match transaction receiver wrap.testnet
+[2026-11-02T14:25:34.933Z] BLOCKED  call the owner-only approve method on the leash
+[2026-11-02T14:25:34.933Z]          AccessKeyMethodNameMismatchActionError: Access key does not allow method approve
+[2026-11-02T14:25:35.474Z] BLOCKED  add a full-access key for the attacker
+[2026-11-02T14:25:35.474Z]          AccessKeyRequiresFullAccessActionError: Access key requires full access
+[2026-11-02T14:25:35.994Z] BLOCKED  delete the account and send its balance to the attacker
+[2026-11-02T14:25:35.994Z]          AccessKeyRequiresFullAccessActionError: Access key requires full access
+[2026-11-02T14:25:36.509Z] BLOCKED  attach a deposit to agent_spend
+[2026-11-02T14:25:36.509Z]          AccessKeyDepositWithFunctionCallActionError: Deposit is not allowed with function call
+
+[2026-11-02T14:25:36.509Z] RESULT: 6/6 attempts rejected by NEAR before any contract code ran.

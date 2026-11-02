@@ -1,0 +1,11 @@
+[2026-11-02T14:40:39.866Z] === Attack 2: compromised agent drains with small payments ===
+[2026-11-02T14:40:39.874Z] leash: allowance-demo-07515.testnet via https://near-testnet.drpc.org
+[2026-11-02T14:40:40.305Z] budget before: {"perPaymentLimitNear":"0.5","windowLimitNear":"1","spentNear":"0.7","remainingNear":"0.3","resetsAt":"2026-11-03T08:19:44.475Z"}
+[2026-11-02T14:40:40.305Z] attacker sends 0.3 NEAR at a time (per-payment limit 0.5) to approved payee vendor.acme-test-07515.testnet
+
+[2026-11-02T14:40:43.503Z] #1: 0.3 NEAR -> {"outcome":"sent"} https://testnet.nearblocks.io/txns/G7GimADfASXfd1CyEcphzmcScQNLoTVUj4xFQiLBLozt
+[2026-11-02T14:40:45.328Z] #2: 0.3 NEAR -> {"outcome":"held","id":"4","reason":"OverWindowLimit"} https://testnet.nearblocks.io/txns/6p5crNiYA1GzbrJJSqaxbvrSznxtVuXAee5cXThRjPA2
+
+[2026-11-02T14:40:45.764Z] budget after: {"perPaymentLimitNear":"0.5","windowLimitNear":"1","spentNear":"1","remainingNear":"0","resetsAt":"2026-11-03T08:19:44.475Z"}
+[2026-11-02T14:40:45.764Z] total that left without approval: 0.3 NEAR (window limit 1)
+[2026-11-02T14:40:45.764Z] RESULT: the window cap stopped the drain; the rest waits for the owner.
