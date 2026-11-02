@@ -1,0 +1,23 @@
+{
+  "name": "haptix-leash-agent",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=23.6"
+  },
+  "scripts": {
+    "chat": "node --env-file=.env src/cli.ts",
+    "attack:injection": "node --env-file=.env attacks/01-prompt-injection.ts",
+    "attack:drain": "node --env-file=.env attacks/02-drip-drain.ts",
+    "attack:key": "node --env-file=.env attacks/03-key-misuse.ts",
+    "test": "node --test src/*.test.ts",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "near-api-js": "7.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "typescript": "5.9.3"
+  }
+}
