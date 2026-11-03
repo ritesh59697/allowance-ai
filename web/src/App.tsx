@@ -2,6 +2,7 @@ import { Bell, ExternalLink } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { AgentKeys } from '@/components/AgentKeys'
+import { OwnerControls } from '@/components/OwnerControls'
 import { PendingCard } from '@/components/PendingCard'
 import { Setup } from '@/components/Setup'
 import { PageShell } from '@/components/SiteHeader'
@@ -57,8 +58,9 @@ export default function App() {
     save(ACCOUNT_KEY, next)
   }
 
-  async function act(action: OwnerAction, target: string, success: string) {
-    if (!passkey) return
+  /** Sign `action` with the passkey and submit it. Resolves true once it lands. */
+  async function act(action: OwnerAction, target: string, success: string): Promise<boolean> {
+    if (!passkey) return false
     setBusy({ target, kind: action.action })
     try {
       const challenge = await challengeFor(account, action)
@@ -68,8 +70,10 @@ export default function App() {
         action: { label: 'View tx', onClick: () => window.open(`${config.explorerTxUrl}${hash}`, '_blank') },
       })
       await refresh()
+      return true
     } catch (e) {
       toast.error(message(e))
+      return false
     } finally {
       setBusy(null)
     }
@@ -182,10 +186,22 @@ export default function App() {
           <AgentKeys
             keys={snapshot.agentKeys}
             busyKey={busy?.kind === 'revoke_agent_key' ? busy.target : null}
+            adding={busy?.kind === 'add_agent_key'}
             disabledReason={disabledReason}
             onRevoke={(publicKey) =>
               act({ action: 'revoke_agent_key', public_key: publicKey }, publicKey, 'Agent key revoked')
             }
+            onAdd={(publicKey, allowance) =>
+              act({ action: 'add_agent_key', public_key: publicKey, allowance }, 'add_agent_key', 'Agent key added')
+            }
+          />
+
+          <OwnerControls
+            policy={snapshot.policy}
+            available={snapshot.available}
+            busyTarget={busy?.kind === 'withdraw' || busy?.kind === 'set_policy' ? busy.target : null}
+            disabledReason={busy ? 'Finish the other approval first.' : disabledReason}
+            onAct={act}
           />
         </div>
       )}

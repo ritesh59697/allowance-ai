@@ -1,5 +1,6 @@
 use super::*;
-use near_sdk::test_utils::{get_logs, VMContextBuilder};
+use near_sdk::mock::MockAction;
+use near_sdk::test_utils::{get_created_receipts, get_logs, VMContextBuilder};
 use near_sdk::testing_env;
 use p256::ecdsa::signature::hazmat::PrehashSigner;
 use p256::ecdsa::{Signature, SigningKey};
@@ -331,6 +332,50 @@ fn passkey_manages_agent_keys() {
     c.revoke_agent_key(pk, a);
     assert_eq!(events(), vec!["agent_key_added", "agent_key_revoked"]);
     assert_eq!(c.get_nonce(), U64(2));
+}
+
+#[test]
+fn passkey_withdraws() {
+    let mut c = setup();
+    let a = sign(&c, OwnerAction::Withdraw { receiver_id: shop(), amount: near(3) });
+    c.withdraw(shop(), near(3), a);
+    assert_eq!(events(), vec!["withdrawn"]);
+    assert_eq!(c.get_nonce(), U64(1));
+    let transfers: Vec<_> = get_created_receipts()
+        .into_iter()
+        .filter(|r| r.receiver_id == shop())
+        .flat_map(|r| r.actions)
+        .filter_map(|a| match a {
+            MockAction::Transfer { deposit, .. } => Some(deposit),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(transfers, vec![near(3)]);
+}
+
+#[test]
+#[should_panic(expected = "challenge mismatch")]
+fn signed_withdraw_cannot_be_redirected() {
+    let mut c = setup();
+    let a = sign(&c, OwnerAction::Withdraw { receiver_id: shop(), amount: near(3) });
+    c.withdraw(attacker(), near(3), a);
+}
+
+#[test]
+#[should_panic(expected = "challenge mismatch")]
+fn signed_withdraw_cannot_be_raised() {
+    let mut c = setup();
+    let a = sign(&c, OwnerAction::Withdraw { receiver_id: shop(), amount: near(3) });
+    c.withdraw(shop(), near(30), a);
+}
+
+#[test]
+#[should_panic(expected = "challenge mismatch")]
+fn withdraw_signature_cannot_be_replayed() {
+    let mut c = setup();
+    let a = sign(&c, OwnerAction::Withdraw { receiver_id: shop(), amount: near(3) });
+    c.withdraw(shop(), near(3), a.clone());
+    c.withdraw(shop(), near(3), a);
 }
 
 #[test]

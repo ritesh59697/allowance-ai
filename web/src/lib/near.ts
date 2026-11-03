@@ -68,6 +68,9 @@ export type OwnerAction =
   | { action: 'reject'; id: string }
   | { action: 'reject_all'; count: number }
   | { action: 'revoke_agent_key'; public_key: string }
+  | { action: 'withdraw'; receiver_id: string; amount: string }
+  | { action: 'set_policy'; policy: Required<Policy> }
+  | { action: 'add_agent_key'; public_key: string; allowance: string }
 
 export type LeashSnapshot = {
   owner: Owner
@@ -77,6 +80,8 @@ export type LeashSnapshot = {
   stats: Stats
   agentKeys: AgentKey[]
   balance: string
+  /** Balance not locked for storage: the most a withdraw can send. */
+  available: string
 }
 
 // ------------------------------------------------------------------ reads
@@ -108,7 +113,7 @@ async function view<T>(account: string, method: string, args: Record<string, unk
   return JSON.parse(new TextDecoder().decode(Uint8Array.from(result.result))) as T
 }
 
-type Overview = Omit<LeashSnapshot, 'agentKeys' | 'balance'> & { nonce: string }
+type Overview = Omit<LeashSnapshot, 'agentKeys' | 'balance' | 'available'> & { nonce: string }
 type AccessKeyList = {
   keys: {
     public_key: string
@@ -118,11 +123,31 @@ type AccessKeyList = {
   }[]
 }
 
+let storagePrice: Promise<bigint> | null = null
+
+/** yoctoNEAR locked per byte of account storage, read once from the protocol config. */
+function storagePricePerByte(): Promise<bigint> {
+  storagePrice ??= rpc<{ runtime_config: { storage_amount_per_byte: string } }>('EXPERIMENTAL_protocol_config', {
+    finality: 'final',
+  })
+    .then((c) => BigInt(c.runtime_config.storage_amount_per_byte))
+    .catch((e: unknown) => {
+      storagePrice = null
+      throw e
+    })
+  return storagePrice
+}
+
 export async function readLeash(account: string): Promise<LeashSnapshot> {
-  const [overview, keys, state] = await Promise.all([
+  const [overview, keys, state, pricePerByte] = await Promise.all([
     view<Overview>(account, 'get_overview'),
     rpc<AccessKeyList>('query', { request_type: 'view_access_key_list', finality: 'optimistic', account_id: account }),
-    rpc<{ amount: string }>('query', { request_type: 'view_account', finality: 'optimistic', account_id: account }),
+    rpc<{ amount: string; storage_usage: number }>('query', {
+      request_type: 'view_account',
+      finality: 'optimistic',
+      account_id: account,
+    }),
+    storagePricePerByte(),
   ])
   const agentKeys = keys.keys.flatMap((k) => {
     const permission = k.access_key.permission
@@ -133,7 +158,10 @@ export async function readLeash(account: string): Promise<LeashSnapshot> {
       : []
   })
   const { owner, policy, window, pending, stats } = overview
-  return { owner, policy, window, pending, stats, agentKeys, balance: state.amount }
+  const locked = BigInt(state.storage_usage) * pricePerByte
+  const free = BigInt(state.amount) - locked
+  const available = (free > 0n ? free : 0n).toString()
+  return { owner, policy, window, pending, stats, agentKeys, balance: state.amount, available }
 }
 
 // ------------------------------------------------------------------ writes

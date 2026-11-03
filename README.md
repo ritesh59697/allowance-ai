@@ -15,7 +15,7 @@ The owner's approval is a WebAuthn passkey signature, verified inside the contra
 Built at NEAR HACKATHON 2026 for the **AI Security & Defense** track. Runs on NEAR **testnet**.
 
 - Overview with live on-chain numbers: https://allowance-agent.vercel.app
-- Owner page (approve / reject held payments): https://allowance-agent.vercel.app/owner
+- Owner page (approve or reject held payments, withdraw, change limits, manage agent keys): https://allowance-agent.vercel.app/owner
 - Arena (try to talk the agent into paying you): https://allowance-agent.vercel.app/arena
 - Contract source: [`contract/src/lib.rs`](contract/src/lib.rs)
 
@@ -67,7 +67,7 @@ Requires Rust with the `wasm32-unknown-unknown` target, and Node.js 23.6 or late
 cd contract && cargo test
 ```
 
-**You should see** `30 passed`. The suite covers sends, holds, drip drains tripping the window cap, window reset, queue limits, refusals, and the passkey checks: wrong key, reject-signature reused to approve, phishing origin, wrong RP ID, presence without biometric, registration ceremony replayed as an assertion, and high-S signatures.
+**You should see** `34 passed`. The suite covers sends, holds, drip drains tripping the window cap, window reset, queue limits, refusals, withdrawals, and the passkey checks: wrong key, reject-signature reused to approve, phishing origin, wrong RP ID, presence without biometric, registration ceremony replayed as an assertion, and high-S signatures.
 
 ```bash
 cd agent && npm ci && npm test
@@ -146,7 +146,7 @@ Both leashes are owned by a passkey on the developer's phone, so you can watch h
 ## Repository
 
 ```
-contract/   Rust smart contract (near-sdk 5): policy, pending queue, passkey verification, 30 tests
+contract/   Rust smart contract (near-sdk 5): policy, pending queue, passkey verification, 34 tests
 agent/      LLM agent, the three attack scripts, and the arena API server
 web/        Landing, owner and arena pages (React, Vite), deployed on Vercel
 scripts/    Deploy, end-to-end, and manual agent-spend scripts
