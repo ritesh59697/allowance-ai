@@ -65,7 +65,8 @@ const server = createServer(async (req, res) => {
   if (req.method === 'OPTIONS') return send(res, 204, null)
   try {
     if (req.method === 'GET' && req.url === '/api/arena') return send(res, 200, arenaSummary())
-    if (req.method === 'GET' && req.url === '/api/health') {
+    // HEAD too: uptime monitors such as UptimeRobot check with HEAD. Node drops the body.
+    if ((req.method === 'GET' || req.method === 'HEAD') && req.url === '/api/health') {
       const h = health()
       return send(res, h.ok ? 200 : 503, h)
     }
