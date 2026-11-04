@@ -21,9 +21,9 @@ const POSTER: S = { agent: true, card: true, check: 3, held: true, notify: true 
 const CALL = { amount: '0.1', to: 'mallory.testnet' }
 
 const CHECKS = [
-  { label: 'Approved payee', pass: false },
-  { label: 'Under the per-payment cap', pass: true },
-  { label: 'Inside the 24 h window', pass: true },
+  { label: 'Approved vendor', pass: false },
+  { label: 'Under the per-payment limit', pass: true },
+  { label: 'Under the 24-hour limit', pass: true },
 ]
 
 const OLDER = [
@@ -105,7 +105,7 @@ export function HeroDemo() {
               <Collapse open={s.card} reveal="drop">
                 <section className="ah-card">
                   <div className="ah-card__head">
-                    <span className="ah-card__title">Contract</span>
+                    <span className="ah-card__title">Your rules</span>
                     <span className="ah-stamp" data-on={s.held || undefined}>
                       <Stamp tone="held">Held for the owner</Stamp>
                     </span>
@@ -145,7 +145,7 @@ export function HeroDemo() {
                     </span>
                   }
                   title="Payment held"
-                  body={`${CALL.amount} NEAR to ${CALL.to} isn't an approved payee. Approve or reject with Face ID.`}
+                  body={`${CALL.amount} NEAR to ${CALL.to} isn't an approved vendor. Approve or reject with Face ID.`}
                 />
               </Collapse>
             </LockScreen>

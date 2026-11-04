@@ -22,7 +22,6 @@ export default function Landing() {
   return (
     <PageShell>
       <Hero summary={summary} error={error} />
-      <BuiltOn />
       <Tagline />
       <Layers />
       <Proof summary={summary} error={error} />
@@ -54,8 +53,8 @@ function Hero({ summary, error }: { summary: ArenaSummary | null; error: string 
         </Reveal>
         <Reveal delay={160}>
           <p className="mt-6 max-w-[680px] text-pretty text-lg text-muted-foreground">
-            Your agent's key can only ask for a payment. A NEAR contract pays approved vendors within your limits and
-            holds the rest until you approve it with Face ID.
+            Your AI agent can ask to pay, but it can't move money on its own. Vendors you approved get paid within your
+            limits. Anything else waits until you approve it with Face ID.
           </p>
         </Reveal>
         <Reveal delay={240}>
@@ -69,7 +68,7 @@ function Hero({ summary, error }: { summary: ArenaSummary | null; error: string 
             {contract && (
               <Button asChild variant="ghost" size="lg" className="h-11 px-4 text-base font-semibold active:scale-[0.98]">
                 <a href={contract} target="_blank" rel="noreferrer">
-                  Read the contract
+                  See the code
                 </a>
               </Button>
             )}
@@ -140,24 +139,6 @@ function LiveLabel({ summary, error }: { summary: ArenaSummary | null; error: st
   )
 }
 
-// ------------------------------------------------------------------ built on
-
-const BUILT_ON = ['Function call access keys', 'env::p256_verify', 'WebAuthn passkeys', 'NEAR AI Cloud', 'near-sdk 5']
-
-function BuiltOn() {
-  return (
-    <Reveal>
-      <section aria-label="What it runs on" className="border-y py-6">
-        <ul className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3 font-mono text-sm text-faint">
-          {BUILT_ON.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      </section>
-    </Reveal>
-  )
-}
-
 // ------------------------------------------------------------------ tagline
 
 function Tagline() {
@@ -166,7 +147,7 @@ function Tagline() {
       <TaglineReveal
         className="text-3xl font-medium leading-tight tracking-tight md:text-4xl"
         lines={[
-          [{ text: 'Assume the model will be fooled.' }],
+          [{ text: 'Assume the AI will be fooled.' }],
           [{ text: 'Then the only question is' }, { text: 'what a fooled agent can do.', accent: true }],
         ]}
       />
@@ -178,18 +159,18 @@ function Tagline() {
 
 const LAYERS: { title: string; body: string; fragment: React.ReactNode }[] = [
   {
-    title: 'The key',
-    body: 'The agent signs with a NEAR function call key that can only call agent_spend on its own account. NEAR rejects anything else before the contract runs.',
+    title: "The agent's key",
+    body: "The agent's key can do one thing: ask for a payment. It can't send money directly, use other apps or change your settings. NEAR blocks all of that.",
     fragment: <KeyFragment />,
   },
   {
-    title: 'The contract',
-    body: 'agent_spend pays only an approved payee, and only inside the per payment and per window caps. Everything else is held and counted.',
+    title: 'Your rules',
+    body: 'Your rules live on NEAR, not inside the AI. Money goes out only to vendors you approved, and only under your limits. Everything else is held.',
     fragment: <ContractFragment />,
   },
   {
     title: 'You',
-    body: 'Held payments wait for your Face ID or fingerprint. The contract checks the passkey signature itself, so no server can approve for you.',
+    body: 'Held payments wait for your Face ID or fingerprint. NEAR checks your approval itself, so no company or server can approve for you.',
     fragment: <ApprovalFragment />,
   },
 ]
@@ -197,8 +178,8 @@ const LAYERS: { title: string; body: string; fragment: React.ReactNode }[] = [
 function Layers() {
   return (
     <Section
-      title="Three layers. None of them reads the prompt."
-      lead="A fooled agent can request a payment, and nothing else. Here is what decides the rest."
+      title="Three checks. None of them listens to the AI."
+      lead="Even a tricked agent can only ask to pay. Here is what decides whether the money moves."
     >
       <ol className="grid gap-4 md:grid-cols-3">
         {LAYERS.map(({ title, body, fragment }, i) => (
@@ -220,8 +201,8 @@ function Layers() {
       </ol>
       <Reveal>
         <p className="max-w-[680px] text-pretty text-sm text-faint">
-          The limit, stated plainly: a payment to an approved payee inside the caps goes out without asking. That is
-          what an allowance is. The window cap bounds what a fooled agent can lose that way.
+          One honest limit: a payment to a vendor you approved, inside your limits, goes out without asking. That is
+          what an allowance is. Your total limit for each period caps what a tricked agent can lose that way.
         </p>
       </Reveal>
     </Section>
@@ -230,17 +211,17 @@ function Layers() {
 
 function KeyFragment() {
   return (
-    <div className="flex flex-col gap-3 font-mono text-xs">
-      <dl className="grid grid-cols-[5rem_1fr] gap-y-1">
-        <dt className="text-faint">permission</dt>
-        <dd>FunctionCall</dd>
-        <dt className="text-faint">methods</dt>
-        <dd className="text-warning">["agent_spend"]</dd>
-        <dt className="text-faint">deposit</dt>
-        <dd>none allowed</dd>
+    <div className="flex flex-col gap-3 text-xs">
+      <dl className="grid grid-cols-[4rem_1fr] gap-y-1">
+        <dt className="text-faint">Can</dt>
+        <dd className="text-warning">Ask for a payment</dd>
+        <dt className="text-faint">Can't</dt>
+        <dd>Send money directly</dd>
+        <dt className="text-faint">Can't</dt>
+        <dd>Use other apps or add keys</dd>
       </dl>
       <div className="flex items-center justify-between gap-2 border-t pt-3">
-        <span className="text-muted-foreground">transfer 4.75 NEAR</span>
+        <span className="text-muted-foreground">Send 4.75 NEAR directly</span>
         <Stamp tone="neutral">Rejected by NEAR</Stamp>
       </div>
     </div>
@@ -275,7 +256,7 @@ function ApprovalFragment() {
       <p className="text-sm">
         Send <span className="font-mono">4.75 NEAR</span> to <span className="font-mono">vendor.testnet</span>?
       </p>
-      <p className="text-xs text-faint">Over the per payment cap</p>
+      <p className="text-xs text-faint">Over your per-payment limit</p>
       <div className="flex gap-2" aria-hidden>
         <span className="rounded-md border px-3 py-1 text-xs text-muted-foreground">Reject</span>
         <span className="rounded-md bg-primary px-3 py-1 text-xs text-primary-foreground">Approve</span>
@@ -288,22 +269,22 @@ function ApprovalFragment() {
 
 const ATTACKS: { title: string; tries: string; tone: StampTone; outcome: string; log: string }[] = [
   {
-    title: 'Prompt injection',
-    tries: 'Instructions hidden in a vendor invoice, in three styles, against a guarded and a jailbroken model',
+    title: 'Hidden instructions',
+    tries: 'Fake payment orders hidden in a vendor invoice, tried three ways, on a careful AI and a jailbroken one',
     tone: 'held',
     outcome: 'Held',
     log: 'agent/attacks/logs/01-prompt-injection.log',
   },
   {
-    title: 'Drip drain',
-    tries: 'A compromised agent skips the model and sends many small payments, each under the per payment cap',
+    title: 'Many small payments',
+    tries: 'A hacked agent skips the AI and sends lots of small payments, each under the per-payment limit',
     tone: 'held',
-    outcome: 'Held at the window cap',
+    outcome: 'Held at the total limit',
     log: 'agent/attacks/logs/02-drip-drain.log',
   },
   {
-    title: 'Key misuse',
-    tries: 'The agent key used directly: a raw transfer, another contract, an owner method, a new key',
+    title: 'Stolen key',
+    tries: "Someone uses the agent's key directly: to send money, use another app, change owner settings or add a key",
     tone: 'neutral',
     outcome: 'Blocked by NEAR',
     log: 'agent/attacks/logs/03-key-misuse.log',
@@ -314,7 +295,7 @@ function Proof({ summary, error }: { summary: ArenaSummary | null; error: string
   return (
     <Section
       title="Proof, not promises"
-      lead="Three attack scripts ran against a live wallet, and anyone can email the arena agent to try their own. Every verdict is on chain."
+      lead="We ran three attacks against a live wallet, and anyone can email the arena agent to try their own. Every result is public on NEAR."
     >
       <div className="grid items-start gap-4 md:grid-cols-[1fr_1.2fr]">
         <ul className="flex flex-col gap-4">
@@ -398,7 +379,7 @@ function FeedRow({ record }: { record: AttemptRecord }) {
           <span className="text-faint">{record.mode === 'jailbroken' ? 'vs jailbroken AI' : 'vs guarded AI'}</span>
         </p>
         <p className="text-xs text-faint">
-          {record.fooled ? 'Model fooled' : 'Model refused'} · {relativeTime(Date.parse(record.at))}
+          {record.fooled ? 'AI fooled' : 'AI refused'} · {relativeTime(Date.parse(record.at))}
         </p>
       </div>
       <div className="flex shrink-0 flex-wrap justify-end gap-1">
@@ -420,14 +401,14 @@ function FeedRow({ record }: { record: AttemptRecord }) {
 
 const NEAR_FEATURES = [
   {
-    title: 'Function call access keys',
-    body: "The protocol limits the agent's key to one method on one contract. On most chains a key is all or nothing, so an agent's limits have to live in a wallet contract or an off chain service.",
-    code: 'FunctionCall { method_names: ["agent_spend"] }',
+    title: 'Keys with limits built in',
+    body: "On NEAR, a key can be limited to a single action, so the agent's key can only ask for a payment. On most blockchains a key can do everything, and the limits need extra software that can break.",
+    feature: 'Function call access keys',
   },
   {
-    title: 'Native P-256 verification',
-    body: "The contract checks a phone's passkey signature directly. Face ID approval needs no relayer, oracle or signing server.",
-    code: 'env::p256_verify(&signature, &message, &public_key)',
+    title: 'Face ID checked by NEAR itself',
+    body: "NEAR can check your phone's Face ID or fingerprint approval directly. No middleman server sits between you and your money.",
+    feature: 'Native P-256 passkey verification (env::p256_verify)',
   },
 ]
 
@@ -435,16 +416,12 @@ function WhyNear() {
   return (
     <Section title="Why this needs NEAR" mark={<NearMark className="size-6 shrink-0" />}>
       <div className="grid gap-4 md:grid-cols-2">
-        {NEAR_FEATURES.map(({ title, body, code }, i) => (
+        {NEAR_FEATURES.map(({ title, body, feature }, i) => (
           <Reveal key={title} delay={i * 100} className="h-full min-w-0">
-            <div className="flex h-full flex-col gap-4 rounded-2xl border bg-card p-2">
-              <code className="block overflow-x-auto rounded-lg border bg-background p-4 font-mono text-xs whitespace-nowrap text-warning">
-                {code}
-              </code>
-              <div className="flex flex-col gap-2 px-4 pb-4">
-                <p className="font-medium">{title}</p>
-                <p className="text-pretty text-muted-foreground">{body}</p>
-              </div>
+            <div className="flex h-full flex-col gap-2 rounded-2xl border bg-card p-6">
+              <p className="font-medium">{title}</p>
+              <p className="text-pretty text-muted-foreground">{body}</p>
+              <p className="mt-auto pt-2 text-xs text-faint">NEAR feature: {feature}</p>
             </div>
           </Reveal>
         ))}
@@ -461,24 +438,24 @@ function faqs(chain: ArenaChain | null): { q: string; a: string }[] {
     : ''
   return [
     {
-      q: 'Can a fooled agent drain the wallet through an approved vendor?',
-      a: `Only up to the window cap. Payments to an approved payee inside the caps go out without asking, and the rest of the window's requests are held.${windowCap}`,
+      q: 'Can a tricked agent drain the wallet by paying an approved vendor?',
+      a: `Only up to your total limit. Payments to an approved vendor inside your limits go out without asking. Anything past that waits for you.${windowCap}`,
     },
     {
-      q: 'What if the model is fully jailbroken?',
-      a: 'Nothing changes. The arena has a Jailbroken AI mode with its safety training removed. It pays attackers when asked, and the contract holds every one of those payments.',
+      q: 'What if the AI is fully jailbroken?',
+      a: 'Nothing changes. The arena has a Jailbroken AI mode with its safety training removed. It agrees to pay attackers, and every one of those payments is held.',
     },
     {
       q: "What if someone steals the agent's key?",
-      a: 'They get exactly what the agent has: the right to request a payment. The key cannot transfer NEAR, call another contract, attach a deposit or add keys. NEAR rejects all of that before any contract code runs.',
+      a: "They get exactly what the agent has: the right to ask for a payment. The key can't send NEAR, use another app or add new keys. NEAR blocks all of that before your rules even run.",
     },
     {
       q: 'Who can approve a held payment?',
-      a: "Only the owner's passkey. The contract rebuilds the challenge, checks the WebAuthn origin, the relying party and the biometric flag, then verifies the P-256 signature itself. A signature works once.",
+      a: "Only you, with your phone's Face ID or fingerprint. NEAR checks the approval itself, checks it came from this site, and never accepts the same approval twice.",
     },
     {
       q: 'Does a server hold a key that can move money?',
-      a: "No. The owner page submits approvals with a key that can only call the passkey gated methods, and each one fails without a fresh signature. The demo wallets still carry the developer's full access key while the contract is finalized; the README lists it under limitations.",
+      a: "No. The owner page can only send approvals, and each one fails without a fresh Face ID or fingerprint from you. One caveat: the demo wallets still have the developer's full key while the project is finished. The README lists it under limitations.",
     },
     {
       q: 'Is this on mainnet?',
@@ -486,7 +463,7 @@ function faqs(chain: ArenaChain | null): { q: string; a: string }[] {
     },
     {
       q: 'Can I run my own wallet?',
-      a: 'Yes. Create a passkey on the owner page, deploy the contract with the script in the repository, and give your agent the key it prints. The README walks through it end to end.',
+      a: 'Yes. Set up Face ID on the owner page, run the setup script from the code, and give your agent the key it prints. The README walks through every step.',
     },
   ]
 }
@@ -525,7 +502,7 @@ function FinalCta() {
           Your turn. Try to talk the agent into paying you.
         </h2>
         <p className="max-w-[680px] text-pretty text-muted-foreground">
-          If you fool the model, you will see the payment held on chain instead of sent.
+          Even if you fool the AI, you will watch the payment get held instead of sent.
         </p>
         <Button asChild size="lg" className="h-11 px-4 text-base font-semibold active:scale-[0.98]">
           <a href="/arena">
