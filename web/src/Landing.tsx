@@ -47,7 +47,7 @@ function Hero({ summary, error }: { summary: ArenaSummary | null; error: string 
           </p>
         </Reveal>
         <Reveal delay={80}>
-          <h1 className="heading-gradient mt-6 max-w-[680px] pb-1 text-4xl font-medium leading-none tracking-tight xl:text-5xl">
+          <h1 className="heading-gradient mt-6 max-w-[680px] text-balance pb-1 text-4xl font-medium leading-none tracking-tight xl:text-5xl">
             A wallet
             <br />a prompt can't empty
           </h1>
