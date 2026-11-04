@@ -19,6 +19,9 @@ const START: S = { agent: false, card: false, check: 0, held: false, notify: fal
 const POSTER: S = { agent: true, card: true, check: 3, held: true, notify: true }
 
 const CALL = { amount: '0.1', to: 'mallory.testnet' }
+// An earlier payment the agent made on its own, already on the lock screen, so
+// the phone opens on the allowance working and the held one lands above it
+const EARLIER = { amount: '0.12', to: 'vendor.testnet', time: '2h ago' }
 
 const CHECKS = [
   { label: 'Approved vendor', pass: false },
@@ -139,19 +142,29 @@ export function HeroDemo() {
             <LockScreen size="satellite" stack="top">
               <Collapse open={s.notify} reveal="drop">
                 <Notification
-                  icon={
-                    <span className="ah-appicon">
-                      <LogoMark className="ah-appicon__mark" />
-                    </span>
-                  }
+                  icon={<AppIcon />}
                   title="Payment held"
                   body={`${CALL.amount} NEAR to ${CALL.to} isn't an approved vendor. Approve or reject with Face ID.`}
                 />
               </Collapse>
+              <Notification
+                icon={<AppIcon />}
+                title="Paid on its own"
+                body={`${EARLIER.amount} NEAR to ${EARLIER.to}, an approved vendor, inside your limits.`}
+                time={EARLIER.time}
+              />
             </LockScreen>
           </Phone>
         </>
       )}
     </Stage>
+  )
+}
+
+function AppIcon() {
+  return (
+    <span className="ah-appicon">
+      <LogoMark className="ah-appicon__mark" />
+    </span>
   )
 }
