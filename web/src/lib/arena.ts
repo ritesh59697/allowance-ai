@@ -1,6 +1,6 @@
 // Client for the arena server (agent/src/server.ts).
-import type { Policy, Stats, WindowView } from './near'
-const API = (import.meta.env.VITE_ARENA_API_URL as string | undefined) ?? ''
+import { config, type Policy, type Stats, type WindowView } from './near'
+const API = config.apiUrl
 
 export type PayAttempt = { receiver: string; amountNear: string; outcome: string; txUrl?: string; approvedPayee: boolean }
 export type Mode = 'guarded' | 'jailbroken'

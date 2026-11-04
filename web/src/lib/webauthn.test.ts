@@ -1,6 +1,7 @@
 import { p256 } from '@noble/curves/nist.js'
 import { describe, expect, it } from 'vitest'
-import { b64urlToBytes, bytesToB64url, derToRaw, spkiToCompressed } from './webauthn'
+import { sha256 } from '@noble/hashes/sha2.js'
+import { assertionSignedBy, b64urlToBytes, bytesToB64url, derToRaw, spkiToCompressed } from './webauthn'
 
 // DER prefix of a P-256 SubjectPublicKeyInfo, as browsers return from getPublicKey().
 const SPKI_P256_PREFIX = Uint8Array.from(
@@ -28,5 +29,28 @@ describe('webauthn conversions', () => {
     const encoded = bytesToB64url(bytes)
     expect(encoded).not.toMatch(/[+/=]/)
     expect(b64urlToBytes(encoded)).toEqual(bytes)
+  })
+})
+
+describe('assertionSignedBy', () => {
+  const secret = p256.utils.randomSecretKey()
+  const owner = btoa(String.fromCharCode(...p256.getPublicKey(secret, true)))
+  const other = btoa(String.fromCharCode(...p256.getPublicKey(p256.utils.randomSecretKey(), true)))
+  const authData = crypto.getRandomValues(new Uint8Array(37))
+  const clientData = new TextEncoder().encode('{"type":"webauthn.get","challenge":"abc"}')
+  const message = new Uint8Array([...authData, ...sha256(clientData)])
+  const der = p256.sign(message, secret, { prehash: true, format: 'der' })
+
+  it('accepts the owner key', () => {
+    expect(assertionSignedBy(authData, clientData, der, owner)).toBe(true)
+  })
+
+  it('rejects a different key', () => {
+    expect(assertionSignedBy(authData, clientData, der, other)).toBe(false)
+  })
+
+  it('rejects a tampered clientDataJSON', () => {
+    const tampered = new TextEncoder().encode('{"type":"webauthn.get","challenge":"abd"}')
+    expect(assertionSignedBy(authData, tampered, der, owner)).toBe(false)
   })
 })

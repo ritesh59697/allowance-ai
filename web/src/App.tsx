@@ -14,13 +14,14 @@ import { near } from '@/lib/format'
 import {
   challengeFor,
   config,
+  getOwner,
   relayKeyPair,
   submitOwnerAction,
   type OwnerAction,
   type Stats,
 } from '@/lib/near'
 import { load, save } from '@/lib/storage'
-import { registerPasskey, signChallenge, type RegisteredPasskey } from '@/lib/webauthn'
+import { findOwnerPasskey, registerPasskey, signChallenge, type RegisteredPasskey } from '@/lib/webauthn'
 
 const PASSKEY_KEY = 'leash.passkey'
 const ACCOUNT_KEY = 'leash.account'
@@ -46,6 +47,26 @@ export default function App() {
       const created = await registerPasskey(config.rpId, `Allowance owner ${new Date().toLocaleDateString()}`)
       save(PASSKEY_KEY, created)
       setPasskey(created)
+    } catch (e) {
+      toast.error(message(e))
+    } finally {
+      setRegistering(false)
+    }
+  }
+
+  /** Use a passkey already on this device that owns `account`. */
+  async function recover() {
+    if (!account) {
+      toast.error('Enter your wallet account first.')
+      return
+    }
+    setRegistering(true)
+    try {
+      const owner = await getOwner(account)
+      const found = await findOwnerPasskey(config.rpId, owner.public_key)
+      save(PASSKEY_KEY, found)
+      setPasskey(found)
+      toast.success(`This device's passkey owns ${account}.`)
     } catch (e) {
       toast.error(message(e))
     } finally {
@@ -95,6 +116,7 @@ export default function App() {
             account={account}
             onAccountChange={changeAccount}
             onRegister={register}
+            onRecover={recover}
             registering={registering}
           />
           {passkey && account && error && (
@@ -104,8 +126,17 @@ export default function App() {
           )}
           {passkey && account && snapshot && !isOwner && (
             <p role="alert" className="rounded-md border border-warning/40 px-3 py-2 text-sm text-warning">
-              <span className="font-mono">{account}</span> is owned by a different passkey. Deploy a wallet with the keys
-              above, then enter that account.
+              <span className="font-mono">{account}</span> is owned by a different passkey. If you set it up on this
+              device,{' '}
+              <button
+                type="button"
+                onClick={recover}
+                disabled={registering}
+                className="underline underline-offset-4 hover:text-foreground disabled:opacity-50"
+              >
+                use that passkey
+              </button>
+              . Otherwise deploy a wallet with the keys above.
             </p>
           )}
         </>

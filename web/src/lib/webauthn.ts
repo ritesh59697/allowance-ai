@@ -2,6 +2,7 @@
 // a 33-byte compressed P-256 key at registration, and raw r||s signatures
 // (not DER) at assertion time.
 import { p256 } from '@noble/curves/nist.js'
+import { sha256 } from '@noble/hashes/sha2.js'
 
 export type WebAuthnAssertion = {
   authenticator_data: string // base64
@@ -85,5 +86,49 @@ export async function signChallenge(passkey: RegisteredPasskey, challenge: strin
     authenticator_data: b64(toBytes(response.authenticatorData)),
     client_data_json: new TextDecoder().decode(toBytes(response.clientDataJSON)),
     signature: b64(derToRaw(toBytes(response.signature))),
+  }
+}
+
+/** Find the passkey on this device that owns a wallet, when this browser has
+ *  lost its record of it (cleared site data, a reinstall). The device lists
+ *  its passkeys for this site; the one picked must sign for `ownerPublicKey`
+ *  (compressed, base64), checked here the same way the contract checks it. */
+export async function findOwnerPasskey(rpId: string, ownerPublicKey: string): Promise<RegisteredPasskey> {
+  const credential = (await navigator.credentials.get({
+    publicKey: {
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      rpId,
+      userVerification: 'required',
+      timeout: 60_000,
+    },
+  })) as PublicKeyCredential | null
+  if (!credential) throw new Error('Passkey prompt was cancelled')
+
+  const response = credential.response as AuthenticatorAssertionResponse
+  const ok = assertionSignedBy(
+    toBytes(response.authenticatorData),
+    toBytes(response.clientDataJSON),
+    toBytes(response.signature),
+    ownerPublicKey,
+  )
+  if (!ok) throw new Error("That passkey doesn't own this wallet. Pick the passkey you set it up with.")
+  return { credentialId: bytesToB64url(toBytes(credential.rawId)), publicKey: ownerPublicKey, rpId }
+}
+
+/** Did `publicKey` (compressed, base64) make this WebAuthn signature (DER)?
+ *  WebAuthn signs authenticatorData || SHA-256(clientDataJSON). High-s is
+ *  accepted, as on chain. */
+export function assertionSignedBy(
+  authData: Uint8Array,
+  clientDataJSON: Uint8Array,
+  derSignature: Uint8Array,
+  publicKey: string,
+): boolean {
+  const signed = new Uint8Array([...authData, ...sha256(clientDataJSON)])
+  const key = Uint8Array.from(atob(publicKey), (c) => c.charCodeAt(0))
+  try {
+    return p256.verify(derToRaw(derSignature), signed, key, { prehash: true, lowS: false })
+  } catch {
+    return false
   }
 }

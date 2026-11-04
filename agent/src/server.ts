@@ -1,8 +1,10 @@
-// HTTP server for the arena. GET /api/arena (summary + feed), POST /api/attempt.
+// HTTP server for the arena. GET /api/arena (summary + feed), POST /api/attempt,
+// POST /api/owner-action (relays a Face ID-signed owner action; see relay.ts).
 //   npm run arena
 import { createHash } from 'node:crypto'
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
 import { ArenaRefusal, arenaConfig, arenaSummary, attempt, health, startChainCache } from './arena.ts'
+import { RelayRefusal, relayOwnerAction } from './relay.ts'
 
 function required(name: string): string {
   const value = process.env[name]
@@ -74,9 +76,13 @@ const server = createServer(async (req, res) => {
       const body = (await readBody(req)) as { handle?: unknown; message?: unknown; mode?: unknown }
       return send(res, 200, await attempt(visitorId(req), body.handle, body.message, body.mode))
     }
+    if (req.method === 'POST' && req.url === '/api/owner-action') {
+      const body = (await readBody(req)) as { account?: unknown; method?: unknown; args?: unknown }
+      return send(res, 200, { txHash: await relayOwnerAction(visitorId(req), body) })
+    }
     return send(res, 404, { error: 'Not found' })
   } catch (e) {
-    if (e instanceof ArenaRefusal) return send(res, e.status, { error: e.message })
+    if (e instanceof ArenaRefusal || e instanceof RelayRefusal) return send(res, e.status, { error: e.message })
     console.error(e)
     return send(res, 500, { error: 'The agent hit an error. Try again.' })
   }

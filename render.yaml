@@ -71,3 +71,13 @@ services:
         value: Qwen/Qwen3.8-27B
       - key: ARENA_MODEL_JAILBROKEN
         value: Qwen/Qwen3.8-27B-abliterated
+      # Owner-action relay: pays gas for Face ID-signed owner actions on the
+      # demo wallets. Its key holds no permission on any wallet.
+      - key: RELAY_ACCOUNT
+        value: allowance-relay-07515.testnet
+      - key: RELAY_SECRET_KEY
+        sync: false
+      - key: RELAY_WALLETS
+        value: allowance-demo-07515.testnet,allowance-arena-07515.testnet
+      - key: RELAY_RATE_LIMIT_SECONDS
+        value: "10"

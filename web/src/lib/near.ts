@@ -25,6 +25,8 @@ export const config = {
   rpId: (import.meta.env.VITE_PASSKEY_RP_ID as string | undefined) || window.location.hostname,
   pollMs: Number(env('VITE_POLL_MS')),
   callGas: BigInt(env('VITE_GAS_CALL_TGAS')) * 10n ** 12n,
+  /** Arena server: the arena API and the owner-action relay. Same origin when empty. */
+  apiUrl: (import.meta.env.VITE_ARENA_API_URL as string | undefined) ?? '',
 }
 
 export const OWNER_METHODS = ['approve', 'reject', 'reject_all', 'set_policy', 'withdraw', 'add_agent_key', 'revoke_agent_key']
@@ -177,18 +179,43 @@ export function relayKeyPair(): KeyPair {
   return fresh
 }
 
+export function getOwner(account: string) {
+  return view<Owner>(account, 'get_owner')
+}
+
+/** Is this device's relay key on `account`, scoped to the wallet's own contract? */
+async function relayKeyAuthorized(account: string): Promise<boolean> {
+  try {
+    const key = await rpc<{ permission: 'FullAccess' | { FunctionCall: { receiver_id: string } } }>('query', {
+      request_type: 'view_access_key',
+      finality: 'final',
+      account_id: account,
+      public_key: relayKeyPair().getPublicKey().toString(),
+    })
+    return key.permission !== 'FullAccess' && key.permission.FunctionCall.receiver_id === account
+  } catch {
+    return false // no such key
+  }
+}
+
 export function challengeFor(account: string, action: OwnerAction) {
   return view<string>(account, 'get_challenge', { action })
 }
 
-/** Submit a passkey-signed owner action. Returns the transaction hash. */
+/** Submit a passkey-signed owner action. Returns the transaction hash.
+ *
+ *  Signs with this device's relay key when the wallet has it. Otherwise (a new
+ *  phone, or cleared site data) the arena server's relay submits it and pays the
+ *  gas. Either way the contract checks the Face ID signature, so neither path
+ *  can move money on its own. */
 export async function submitOwnerAction(
   account: string,
   action: OwnerAction,
   assertion: WebAuthnAssertion,
 ): Promise<string> {
-  const signer = new Account(account, provider, new KeyPairSigner(relayKeyPair()))
   const { action: methodName, ...args } = action
+  if (!(await relayKeyAuthorized(account))) return relayOwnerAction(account, methodName, { ...args, assertion })
+  const signer = new Account(account, provider, new KeyPairSigner(relayKeyPair()))
   const outcome = await signer.callFunctionRaw({
     contractId: account,
     methodName,
@@ -196,4 +223,15 @@ export async function submitOwnerAction(
     gas: config.callGas,
   })
   return outcome.transaction.hash
+}
+
+async function relayOwnerAction(account: string, method: string, args: Record<string, unknown>): Promise<string> {
+  const res = await fetch(`${config.apiUrl}/api/owner-action`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ account, method, args }),
+  })
+  const body = (await res.json().catch(() => ({}))) as { txHash?: string; error?: string }
+  if (!res.ok || !body.txHash) throw new Error(body.error ?? `Relay failed (${res.status})`)
+  return body.txHash
 }

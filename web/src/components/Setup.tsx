@@ -11,11 +11,12 @@ type Props = {
   account: string
   onAccountChange: (account: string) => void
   onRegister: () => void
+  onRecover: () => void
   registering: boolean
 }
 
 /** First run: create the owner passkey and hand its key to the deploy script. */
-export function Setup({ passkey, relayPublicKey, account, onAccountChange, onRegister, registering }: Props) {
+export function Setup({ passkey, relayPublicKey, account, onAccountChange, onRegister, onRecover, registering }: Props) {
   return (
     <div className="flex flex-col gap-10">
       <div className="flex flex-col gap-4">
@@ -41,10 +42,15 @@ export function Setup({ passkey, relayPublicKey, account, onAccountChange, onReg
               Passkey created for <span className="font-mono">{passkey.rpId}</span>
             </p>
           ) : (
-            <Button size="lg" className="h-11 self-start px-5" onClick={onRegister} disabled={registering}>
-              <Fingerprint strokeWidth={1.5} aria-hidden />
-              {registering ? 'Waiting for your device…' : 'Create passkey'}
-            </Button>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <Button size="lg" className="h-11 px-5" onClick={onRegister} disabled={registering}>
+                <Fingerprint strokeWidth={1.5} aria-hidden />
+                {registering ? 'Waiting for your device…' : 'Create passkey'}
+              </Button>
+              <Button variant="link" size="sm" className="px-0" onClick={onRecover} disabled={registering}>
+                I already have one for the wallet below
+              </Button>
+            </div>
           )}
         </Step>
 
@@ -66,24 +72,22 @@ export function Setup({ passkey, relayPublicKey, account, onAccountChange, onReg
           )}
         </Step>
 
-        <Step n={3} title="Open your wallet" disabled={!passkey}>
-          {passkey && (
-            <div className="flex flex-col gap-2">
-              <label htmlFor="account" className="text-sm text-muted-foreground">
-                Wallet account on {config.network}
-              </label>
-              <input
-                id="account"
-                value={account}
-                onChange={(e) => onAccountChange(e.target.value.trim())}
-                placeholder={`my-agent.${config.network}`}
-                autoCapitalize="off"
-                autoCorrect="off"
-                spellCheck={false}
-                className="h-11 rounded-md border border-input bg-card px-3 font-mono text-sm outline-none transition-colors duration-150 placeholder:text-faint focus-visible:border-ring/60 focus-visible:ring-3 focus-visible:ring-ring/20"
-              />
-            </div>
-          )}
+        <Step n={3} title="Open your wallet">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="account" className="text-sm text-muted-foreground">
+              Wallet account on {config.network}
+            </label>
+            <input
+              id="account"
+              value={account}
+              onChange={(e) => onAccountChange(e.target.value.trim())}
+              placeholder={`my-agent.${config.network}`}
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
+              className="h-11 rounded-md border border-input bg-card px-3 font-mono text-sm outline-none transition-colors duration-150 placeholder:text-faint focus-visible:border-ring/60 focus-visible:ring-3 focus-visible:ring-ring/20"
+            />
+          </div>
         </Step>
       </ol>
     </div>
