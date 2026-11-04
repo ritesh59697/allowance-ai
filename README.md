@@ -35,6 +35,8 @@ The answer here is: request a payment, and nothing else. NEAR rejects any other 
 
 The owner page submits approvals through a second function-call key limited to the passkey-gated methods (`approve`, `reject`, `reject_all`, `set_policy`, `withdraw`, `add_agent_key`, `revoke_agent_key`). That key is not trusted: every one of those methods fails without a valid passkey signature.
 
+If a phone's own key isn't on the wallet (a new phone, or cleared site data), the owner page finds the passkey already on the device, checks it against the owner key on-chain, and sends the signed approval through a relay on the arena server instead. The relay only pays the gas: it holds no key on any wallet, and the contract still checks the passkey signature.
+
 ## Verify it yourself
 
 ### 1. See the agent's key permissions on-chain (30 seconds)
@@ -43,7 +45,7 @@ The owner page submits approvals through a second function-call key limited to t
 curl -s https://near-testnet.drpc.org -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"query","params":{"request_type":"view_access_key_list","finality":"final","account_id":"allowance-demo-07515.testnet"}}' | jq '.result.keys[].access_key.permission'
 ```
 
-**You should see** a `FunctionCall` key with `"method_names": ["agent_spend"]` — the agent's key — and one limited to the seven passkey-gated owner methods. The third, `FullAccess`, is the developer's key (see [Limitations](#limitations)).
+**You should see** a `FunctionCall` key with `"method_names": ["agent_spend"]` — the agent's key — and one limited to the seven passkey-gated owner methods. **There is no `FullAccess` key.** The developer's key was deleted from both demo wallets ([demo](https://testnet.nearblocks.io/txns/EneAhCf1JYNSon8AiESBFv9TDX23tz2JTcY4GGCGjJYA), [arena](https://testnet.nearblocks.io/txns/4c72G1NC4wWc2qQ62Lk7bdN9kMMMcMhWVzUGTk7YPkiz)), so no key anywhere can move this NEAR except through the contract's rules or the owner's Face ID.
 
 ### 2. Read the live policy and history
 
@@ -147,7 +149,7 @@ Both leashes are owned by a passkey on the developer's phone, so you can watch h
 
 ```
 contract/   Rust smart contract (near-sdk 5): policy, pending queue, passkey verification, 34 tests
-agent/      LLM agent, the three attack scripts, and the arena API server
+agent/      LLM agent, the three attack scripts, and the arena API server (with the owner-action relay)
 web/        Landing, owner and arena pages (React, Vite), deployed on Vercel
 scripts/    Deploy, end-to-end, and manual agent-spend scripts
 render.yaml Hosting blueprint for the arena API
@@ -159,9 +161,10 @@ No account names, endpoints or keys are hard-coded: everything is read from `.en
 
 - **An in-limit payment to an approved payee goes through without asking.** That's the point of an allowance, but it means a fooled agent can still send up to the window cap to a vendor already on the allowlist. The window bounds that loss.
 - **Testnet only.** No real funds are at risk, and the arena pot is testnet NEAR.
-- **The demo accounts still have a full-access key**, kept by the developer for upgrades. The agent never sees it. The contract supports running without one — the passkey can manage agent keys and withdrawals — and a production leash should delete it.
+- **The demo wallets can't be upgraded.** Their full-access keys are deleted, so their contract code is fixed. A contract fix means deploying new wallets.
+- **Phones without their own relay key depend on the relay for approvals.** If the arena server is down, held payments wait, and the money stays put. Any NEAR account can still submit a Face ID-signed approval, because the contract checks the signature, not the sender.
 - **A passkey works only on its own domain.** The owner's RP ID and allowed origins are fixed when the contract is initialized.
-- **The arena API runs on a free hosting plan.** After idle time its first request takes about a minute, and its feed of recent attempts resets on restart. On-chain stats are unaffected.
+- **The arena API runs on a free hosting plan.** An uptime check keeps it awake, but its feed of recent attempts resets when it restarts. On-chain stats are unaffected.
 - **The policy doesn't judge intent.** It doesn't detect scams or score counterparties; it limits what any single compromised decision can cost.
 
 ## Prior work

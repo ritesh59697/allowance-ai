@@ -455,7 +455,7 @@ function faqs(chain: ArenaChain | null): { q: string; a: string }[] {
     },
     {
       q: 'Does a server hold a key that can move money?',
-      a: "No. The owner page can only send approvals, and each one fails without a fresh Face ID or fingerprint from you. One caveat: the demo wallets still have the developer's full key while the project is finished. The README lists it under limitations.",
+      a: "No. The demo wallets have no full-access key at all. One key can only ask for payments, and the other can only send approvals that each fail without a fresh Face ID or fingerprint from you. A small relay can pay the network fee for an approval, but it holds no key on either wallet.",
     },
     {
       q: 'Is this on mainnet?',
