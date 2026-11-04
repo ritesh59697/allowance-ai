@@ -35,15 +35,15 @@ export default function App() {
 
   const isOwner = !!passkey && !!snapshot && snapshot.owner.public_key === passkey.publicKey
   const disabledReason = !snapshot
-    ? 'Loading the leash…'
+    ? 'Loading the wallet…'
     : isOwner
       ? null
-      : "This device's passkey is not the owner of this leash."
+      : "This device's passkey is not the owner of this wallet."
 
   async function register() {
     setRegistering(true)
     try {
-      const created = await registerPasskey(config.rpId, `leash owner ${new Date().toLocaleDateString()}`)
+      const created = await registerPasskey(config.rpId, `Allowance owner ${new Date().toLocaleDateString()}`)
       save(PASSKEY_KEY, created)
       setPasskey(created)
     } catch (e) {
@@ -104,7 +104,7 @@ export default function App() {
           )}
           {passkey && account && snapshot && !isOwner && (
             <p role="alert" className="rounded-md border border-warning/40 px-3 py-2 text-sm text-warning">
-              <span className="font-mono">{account}</span> is owned by a different passkey. Deploy a leash with the keys
+              <span className="font-mono">{account}</span> is owned by a different passkey. Deploy a wallet with the keys
               above, then enter that account.
             </p>
           )}
@@ -124,7 +124,7 @@ export default function App() {
             </a>
             <p className="text-sm text-muted-foreground">Balance {near(snapshot.balance)} NEAR</p>
             <Button variant="link" size="sm" className="self-start px-0" onClick={() => changeAccount('')}>
-              Switch leash
+              Switch wallet
             </Button>
           </div>
 
