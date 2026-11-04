@@ -156,7 +156,7 @@ export default function App() {
                     {busy?.target === 'all' ? 'Rejecting…' : `Reject all ${snapshot.pending.length}`}
                   </Button>
                 )}
-                <NotifyButton />
+                {isOwner && <NotifyButton />}
               </div>
             </div>
             {snapshot.pending.length === 0 ? (
