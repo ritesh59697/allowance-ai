@@ -4,8 +4,8 @@
 
 .ah .ss-stage {
   --gutter: 24px;
-  --ss-font: 'IBM Plex Sans', ui-sans-serif, sans-serif;
-  --ss-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --ss-font: 'Geist Variable', ui-sans-serif, sans-serif;
+  --ss-mono: 'Geist Mono Variable', ui-monospace, monospace;
   --ss-canvas: var(--background);
   --ss-surface: var(--card);
   --ss-chrome: var(--card);

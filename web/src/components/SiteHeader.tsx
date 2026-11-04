@@ -27,8 +27,8 @@ function SiteHeader() {
   const here = window.location.pathname.replace(/\/$/, '')
   const links = config.repoUrl ? [...LINKS, { href: config.repoUrl, label: 'GitHub' }] : LINKS
   return (
-    <header className="border-b">
-      <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+    <header className="sticky top-0 z-40 px-4 pt-4 sm:px-6">
+      <div className="mx-auto flex h-12 w-full max-w-6xl items-center justify-between gap-4 rounded-full border bg-background/70 pr-2 pl-4 backdrop-blur-xl">
         <a href="/" className={cn(linkClass, 'flex items-center gap-2 font-medium text-foreground')}>
           <LogoMark className="size-[18px]" />
           <span className="text-base">Allowance</span>

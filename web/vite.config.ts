@@ -9,6 +9,8 @@ export default defineConfig(({ mode }) => {
     plugins: [react(), tailwindcss()],
     resolve: { alias: { '@': path.resolve(import.meta.dirname, './src') } },
     // Dev only: forward /api to the arena server (agent/src/server.ts).
-    server: env.ARENA_PROXY_TARGET ? { proxy: { '/api': env.ARENA_PROXY_TARGET } } : undefined,
+    server: env.ARENA_PROXY_TARGET
+      ? { proxy: { '/api': { target: env.ARENA_PROXY_TARGET, changeOrigin: true } } }
+      : undefined,
   }
 })
