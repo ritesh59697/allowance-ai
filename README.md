@@ -10,10 +10,11 @@ The agent holds one key: a NEAR function-call key that can call exactly one meth
 | To anyone else, or over either limit | **Held** until the owner approves or rejects it with Face ID / fingerprint |
 | Zero amount, to itself, oversized memo, or queue full | **Refused** and counted |
 
-The owner's approval is a WebAuthn passkey signature, verified inside the contract with NEAR's native `env::p256_verify`. There is no server holding a key and no off-chain policy service.
+The owner's approval is a WebAuthn passkey signature, verified inside the contract with NEAR's native `env::p256_verify`. No server holds a key that can move the wallet's money, and there is no off-chain policy service.
 
 Built at NEAR HACKATHON 2026 for the **AI Security & Defense** track. Runs on NEAR **testnet**.
 
+- Demo video (1:44, on X): https://x.com/Ritesh5969/status/2118542200615457097
 - Overview with live on-chain numbers: https://allowance-agent.vercel.app
 - Owner page (approve or reject held payments, withdraw, change limits, manage agent keys): https://allowance-agent.vercel.app/owner
 - Arena (try to talk the agent into paying you): https://allowance-agent.vercel.app/arena
@@ -166,6 +167,16 @@ No account names, endpoints or keys are hard-coded: everything is read from `.en
 - **A passkey works only on its own domain.** The owner's RP ID and allowed origins are fixed when the contract is initialized.
 - **The arena API runs on a free hosting plan.** An uptime check keeps it awake, but its feed of recent attempts resets when it restarts. On-chain stats are unaffected.
 - **The policy doesn't judge intent.** It doesn't detect scams or score counterparties; it limits what any single compromised decision can cost.
+
+## Built with
+
+- **Contract:** Rust, [near-sdk](https://crates.io/crates/near-sdk) 5.30, `base64`. Tests use `p256` to sign test passkey assertions.
+- **Agent and arena server:** Node.js with TypeScript, [near-api-js](https://www.npmjs.com/package/near-api-js) 7.4. The models are served by [NEAR AI Cloud](https://cloud.near.ai): `Qwen/Qwen3.8-27B` (guarded) and `Qwen/Qwen3.8-27B-abliterated` (jailbroken).
+- **Scripts:** near-api-js, `@noble/curves` and `@noble/hashes` (the dev software passkey for tests).
+- **Web:** Vite, React 19, Tailwind CSS 4, shadcn/ui on Radix, lucide-react icons, sonner toasts, Geist fonts, near-api-js, `@noble/curves`. The landing page's animated hero uses the [stageshow](web/src/vendor/stageshow/LICENSE) kit (MIT, by Benji Taylor), vendored in `web/src/vendor/stageshow/` with its own licenses. No other template.
+- **Hosting:** Vercel (web), Render (arena server).
+- **AI-written code:** this project was built with an AI coding assistant (Claude Code). It wrote most of the code under my direction; I chose the design and checked the results. The steps under "Verify it yourself" let you check the main claims against the live testnet contracts.
+- **Demo video:** the narration is an AI text-to-speech voice (Microsoft Edge neural TTS). The phone footage is a real screen recording of the owner rejecting a held payment.
 
 ## Prior work
 
