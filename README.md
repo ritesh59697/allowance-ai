@@ -1,6 +1,12 @@
 # Allowance
 
-An AI agent's NEAR wallet, with the spending rules enforced on-chain.
+An AI agent's NEAR wallet where the owner approves risky payments with Face ID, and the smart contract itself verifies that Face ID signature.
+
+What sets it apart, each checkable in under a minute ([Verify it yourself](#verify-it-yourself)):
+
+- **Passkey verified on-chain.** Approve, reject, withdraw and policy changes need a WebAuthn signature that the contract checks with NEAR's native `env::p256_verify`. No server, wallet extension or seed phrase signs owner actions.
+- **No full-access key exists.** The developer's key was deleted from both demo wallets. The only keys left can request a payment or submit a passkey-signed owner action.
+- **A live arena with a jailbroken model.** Email the agent and try to get paid. Even when the model is fooled, the contract holds the payment.
 
 The agent holds one key: a NEAR function-call key that can call exactly one method, `agent_spend`, on its own account. A smart contract on that account decides what happens to each payment:
 
